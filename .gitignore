@@ -22,3 +22,6 @@ go.work
 
 # Variables de entorno
 .env
+
+# local-data de CockroachDB
+/backend/local-data/

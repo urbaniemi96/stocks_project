@@ -3,6 +3,7 @@ package main
 import (
   "log"
   "github.com/gin-gonic/gin"
+  //"fmt"
 )
 
 
@@ -12,6 +13,20 @@ func main() {
   initDB()
   // Inicializo gin
   r := gin.Default()
+
+  r.Use(func(c *gin.Context) {
+    c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+    c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+    c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+  
+    if c.Request.Method == "OPTIONS" {
+      c.AbortWithStatus(204)
+      return
+    }
+  
+    c.Next()
+  })
+
   // Rutas hacia los manejadores
   r.GET("/fetch", getStocksHandler) // Traigo datos de la API y guardo en la DB
   r.GET("/stocks", listStocksHandler) // Muestro los datos guardados en la DB

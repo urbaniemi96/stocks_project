@@ -39,7 +39,7 @@ func saveStocks(ctx context.Context, stocks []Stock) error {
   // Inicio transacción (con contexto raiz vacío)
   tx, err := db.Begin(ctx)
   if err != nil {
-	return err
+	  return err
   }
   // Preparo un rollback en caso de que la transacción falle
   defer tx.Rollback(ctx)
@@ -55,9 +55,11 @@ func saveStocks(ctx context.Context, stocks []Stock) error {
 	s.Action, s.Brokerage, s.RatingFrom, s.RatingTo, s.Time,
 	)
     if err != nil {
-	  return err
-	}
+	    return err
+	  }
   }
+  retur := tx.Commit(ctx)
+
   // Al hacer el commit, el rollback del defer queda sin efecto (el commit primero se hace, y DESPUES se retorna su valor (por más que que defer se ejecute antes de retornar))
-  return tx.Commit(ctx)
+  return retur
 }

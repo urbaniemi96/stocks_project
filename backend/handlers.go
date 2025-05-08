@@ -4,20 +4,24 @@ import (
   "context"
   "net/http"
   "github.com/gin-gonic/gin"
+  //"fmt"
 )
 // Manejador para obtener los stocks
 func getStocksHandler(c *gin.Context) {
   // Traigo los stocks
   stocks, err := fetchAllStocks()
+
   if err != nil {
     c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
     return
   }
+
   // Guardo los stocks en la DB
   if err := saveStocks(context.Background(), stocks); err != nil {
     c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
     return
   }
+
   // Devuelvo todo Ok
   c.JSON(http.StatusOK, stocks)
 }

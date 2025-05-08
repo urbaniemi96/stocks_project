@@ -4,6 +4,7 @@ import (
     "github.com/joho/godotenv"
     "log"
     "os"
+    //"fmt"
 )
 
 // Todas las funciones init() dentro del paquete main se ejecutan ANTES del main(). Ideal para cargar configuraciones
@@ -12,16 +13,11 @@ func init() {
     err := godotenv.Load()
 	// Detecto error y detenco ejecución
     if err != nil {
-        log.Fatal("Error al cargar el archivo .env")
+        log.Fatal("Error al cargar el archivo .env - ERROR: ", err)
     }
 }
 
 // Obtengo la url de la db desde el .env
-//
-//
-// REVISAR
-//
-//
 func getDBURL() string {
 	return os.Getenv("DATABASE_URL")
 }
