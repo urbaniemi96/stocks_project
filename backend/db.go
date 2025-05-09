@@ -1,41 +1,47 @@
 package main
 
 import (
-  "context"
+  //"context"
   "log"
-  "github.com/jackc/pgx/v5"
+  "gorm.io/gorm"
+  "gorm.io/driver/postgres"
+  "gorm.io/gorm/clause"
 )
 
-var db *pgx.Conn
+var db *gorm.DB
 
 // Inicio la conexión a la DB, creo la tabla stocks si no existe
 func initDB() {
   var err error
-  url := getDBURL() // En config.go
-  db, err = pgx.Connect(context.Background(), url) // Paso un contexto raíz vacío (para pruebas) porque no tengo un contexto superior (relacionado a timeouts y cancelaciones, investigar más)
+  dsn := getDBDSN() // En config.go
+  db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
   if err != nil {
     log.Fatalf("Error al conectar a la db: %v", err)
   }
-  // Creo tabla si no existe
-  _, err = db.Exec(context.Background(), `
-    CREATE TABLE IF NOT EXISTS stocks (
-      ticker TEXT PRIMARY KEY,
-      company TEXT,
-      target_from FLOAT,
-      target_to FLOAT,
-      action TEXT,
-      brokerage TEXT,
-      rating_from TEXT,
-      rating_to TEXT,
-      time TIMESTAMPTZ
-    );
-  `)
+  // Creo tabla si no existe usando AutoMigrate
+  db.AutoMigrate(&Stock{})
   if err != nil {
     log.Fatalf("Error al crear la tabla: %v", err)
   }
 }
 
-func saveStocks(ctx context.Context, stocks []Stock) error {
+func saveStocks(stocks []Stock) error {
+  // Inicio transacción con rollback automático en caso de error
+	return db.Transaction(func(tx *gorm.DB) error {
+    // Recorro los stocks
+		for _, s := range stocks {
+			// Si ya existe el ticker , actualiza los campos
+			if err := tx.Clauses(clause.OnConflict{
+				UpdateAll: true,
+			}).Create(&s).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+/*func saveStocks(ctx context.Context, stocks []Stock) error {
   // Inicio transacción (con contexto raiz vacío)
   tx, err := db.Begin(ctx)
   if err != nil {
@@ -62,4 +68,4 @@ func saveStocks(ctx context.Context, stocks []Stock) error {
 
   // Al hacer el commit, el rollback del defer queda sin efecto (el commit primero se hace, y DESPUES se retorna su valor (por más que que defer se ejecute antes de retornar))
   return retur
-}
+}*/

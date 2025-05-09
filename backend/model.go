@@ -4,7 +4,7 @@ import "time"
 
 // Creo el modelo de acciones
 type Stock struct {
-  Ticker     string    `json:"ticker"`
+  Ticker     string    `json:"ticker" gorm:"primaryKey"` // Clave primaria
   Company    string    `json:"company"`
   TargetFrom float64   `json:"target_from"`
   TargetTo   float64   `json:"target_to"`

@@ -15,34 +15,32 @@
       (Δ {{ (recommended.target_to - recommended.target_from).toFixed(2) }})
     </div>
 
-    <table class="min-w-full bg-white text-gray-800 text-sm">
+    <table ref="stocksTable" class="min-w-full bg-white text-gray-800 text-sm">
       <thead>
-        <tr class="bg-gray-200 text-left font-semibold">
-          <th class="p-2">Ticker</th>
-          <th class="p-2">Company</th>
-          <th class="p-2">From</th>
-          <th class="p-2">To</th>
+        <tr class="bg-gray-200 font-semibold">
+          <th>Ticker</th>
+          <th>Company</th>
+          <th>From</th>
+          <th>To</th>
         </tr>
       </thead>
-      <tbody>
-        <tr v-for="s in stocks" :key="s.ticker" class="border-t hover:bg-gray-100">
-          <td class="p-2">{{ s.ticker }}</td>
-          <td class="p-2">{{ s.company }}</td>
-          <td class="p-2">{{ s.target_from }}</td>
-          <td class="p-2">{{ s.target_to }}</td>
-        </tr>
-      </tbody>
+      <tbody></tbody>
     </table>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
+import $ from 'jquery'
+import 'datatables.net'
 import { useStockStore } from './stores/stocks'
 import { storeToRefs } from 'pinia'
 
 const store = useStockStore()
 const { list: stocks, recommended, taskId, status } = storeToRefs(store)
+
+const stocksTable = ref<HTMLTableElement>()
+let dataTable: any = null
 
 async function refreshAll() {
   await store.fetchAndStore()
@@ -54,8 +52,27 @@ async function getRecommendation() {
 }
 
 onMounted(() => {
-  store.loadStocks()
+  //store.loadStocks()
+  dataTable = $(stocksTable.value!).DataTable({
+    processing: true,
+    serverSide: true,
+    ajax: { url: 'http://localhost:8080/stocks', type: 'GET' },
+    columns: [
+      { data: 'ticker' },
+      { data: 'company' },
+      { data: 'target_from' },
+      { data: 'target_to' },
+    ],
+    order: [[0, 'asc']],
+    pageLength: 10,
+    lengthMenu: [[10, 20, 50], [10, 20, 50]],
+  })
 })
+
+onBeforeUnmount(() => {
+  if (dataTable) dataTable.destroy(true)
+})
+
 </script>
 
 <style scoped>

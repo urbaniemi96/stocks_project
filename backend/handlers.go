@@ -1,11 +1,12 @@
 package main
 
 import (
-  "context"
+  //"context"
   "net/http"
   "github.com/gin-gonic/gin"
+  "strconv"
   "github.com/google/uuid"
-  //"fmt"
+  "fmt"
 )
 // Inicia una goroutine que trae los stocks de la API y los guarda en la DB (de a una página a la vez)
 func StartFetchHandler(c *gin.Context) {
@@ -46,7 +47,7 @@ func StartFetchHandler(c *gin.Context) {
         // Convierto los items traidos de la página a estructura Stock
         //stocks := convertItemsToStocks(r.Items)
         // Guardo los stocks en la BD
-        if err := saveStocks(context.Background(), stocks); err != nil {
+        if err := saveStocks(stocks); err != nil {
           // Marco en caso de error
           tasksMu.Lock()
           info.Status = "error"
@@ -110,8 +111,63 @@ func FetchStatusHandler(c *gin.Context) {
   c.JSON(http.StatusOK, stocks)
 }*/
 
-// Manejador para listar los stocks guardados
+// Manejador para listar los stocks guardados en la BD
 func listStocksHandler(c *gin.Context) {
+  // Contador de la petición actual
+  draw := c.DefaultQuery("draw", "1") //Obtengo parámetros y le asigno un default si no existen
+  // Índice del primer registro a mostrar
+	startStr := c.DefaultQuery("start", "0")
+  // Cantidad de registros por pag
+	lengthStr := c.DefaultQuery("length", "10")
+  // Texto a buscar
+	search := c.Query("search[value]") //Le asigno "" si no existe
+
+  // Convierto a enteros los valores obtenidos
+  start, _ := strconv.Atoi(startStr)
+	length, _ := strconv.Atoi(lengthStr)
+
+  // Obtengo datos para el ordenamiento de DataTables
+  orderColumnIndex := c.Query("order[0][column]") // Índice de la col a ordenar
+	orderDir := c.DefaultQuery("order[0][dir]", "asc") // "asc" o "desc"
+	orderColumnName := c.Query(fmt.Sprintf("columns[%s][data]", orderColumnIndex)) // Nombre de la columna a ordenar
+	if orderColumnName == "" {
+		orderColumnName = "ticker" // Columna por defecto
+	}
+
+  // Cuento el total de datos en tabla de stocks
+  var total int64
+	db.Table("stocks").Count(&total)
+
+  // Query base
+  query := db.Table("stocks")
+
+  // Si hay texto a buscar, filtro resultados (solo busco en "ticker" o en "company")
+  if search != "" {
+		query = query.Where("ticker ILIKE ? OR company ILIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+
+  // Cuento la cantidad de resultados filtrados
+  var filtered int64
+	query.Count(&filtered)
+
+  var stocks []Stock
+	query.
+    Order(fmt.Sprintf("%s %s", orderColumnName, orderDir)). // Aplico orden y dirección
+		Offset(start). // Indico de qué registro empezar
+		Limit(length). // Indico cuántos registros traer
+		Find(&stocks) // Ejecuto consulta y guardo en variable stocks
+
+  // Devuelvo respuesta con el formato que requiere DataTables
+  c.JSON(http.StatusOK, gin.H{
+		"draw":            draw,
+		"recordsTotal":    total,
+		"recordsFiltered": filtered,
+		"data":            stocks,
+	})
+}
+
+// Manejador para listar los stocks guardados en la BD
+/*func listStocksHandler(c *gin.Context) {
   rows, _ := db.Query(context.Background(), `SELECT ticker, company, target_from, target_to, action, brokerage, rating_from, rating_to, time FROM stocks`)
   defer rows.Close()
 
@@ -123,14 +179,14 @@ func listStocksHandler(c *gin.Context) {
     all = append(all, s)
   }
   c.JSON(http.StatusOK, all)
-}
+}*/
 
 // Manejador para recomendar mejores stocks (REVISAR JUNTO CON EL ALGORITMO)
-func recommendHandler(c *gin.Context) {
+/*func recommendHandler(c *gin.Context) {
   best, err := recommendBest(context.Background())
   if err != nil {
     c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
     return
   }
   c.JSON(http.StatusOK, best)
-}
+}*/

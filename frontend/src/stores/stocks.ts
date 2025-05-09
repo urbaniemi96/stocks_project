@@ -49,8 +49,8 @@ export const useStockStore = defineStore('stocks', {
     },
     // Llamo al back para recomendar una acción
     async computeRecommendation() {
-      const res = await api.get<Stock>('/recommend')
-      this.recommended = res.data
+      //const res = await api.get<Stock>('/recommend')
+      //this.recommended = res.data
     },
   },
 })

@@ -32,7 +32,7 @@ func main() {
   r.GET("/fetch", StartFetchHandler) // Traigo datos de la API y guardo en la DB
   r.GET("/fetch/status/:id", FetchStatusHandler) //Consulto el estado de la tarea con :id
   r.GET("/stocks", listStocksHandler) // Muestro los datos guardados en la DB
-  r.GET("/recommend", recommendHandler) // Recomiendo mejor stock
+  //r.GET("/recommend", recommendHandler) // Recomiendo mejor stock
 
   // Arranco el servidor en el puerto 8080
   if err := r.Run(":8080"); err != nil {

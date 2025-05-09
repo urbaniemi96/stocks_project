@@ -17,9 +17,9 @@ func init() {
     }
 }
 
-// Obtengo la url de la db desde el .env
-func getDBURL() string {
-	return os.Getenv("DATABASE_URL")
+// Obtengo la dsn de la db desde el .env (para GORM)
+func getDBDSN() string {
+	return os.Getenv("DATABASE_DSN")
 }
 // Obtengo URL de la API
 func getAPIURL() string {

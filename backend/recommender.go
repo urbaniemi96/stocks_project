@@ -6,11 +6,11 @@
 package main
 
 import (
-  "context"
-  "log"
+  //"context"
+  //"log"
 )
 
-func recommendBest(ctx context.Context) (*Stock, error) {
+/*func recommendBest(ctx context.Context) (*Stock, error) {
   rows, err := db.Query(ctx, `SELECT ticker, company, target_from, target_to, action, brokerage, rating_from, rating_to, time FROM stocks`)
   if err != nil {
     return nil, err
@@ -34,4 +34,4 @@ func recommendBest(ctx context.Context) (*Stock, error) {
     }
   }
   return best, nil
-}
+}*/
