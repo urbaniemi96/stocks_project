@@ -2,6 +2,7 @@ package main
 
 import (
   //"context"
+  "fmt"
   "encoding/json"
   "io"
   //"log"
@@ -27,6 +28,60 @@ type apiResponse struct {
   NextPage string `json:"next_page"`
 }
 
+// Traigo los datos de una página (nextPage) y los transformo en []Stock
+func fetchPage(nextPage string) ([]Stock, string, error) {
+  var r apiResponse
+  // Inicio array de estructuras tipo Stock (definidas en model.go)
+  var all []Stock
+  url := getAPIURL()
+  key := getAPIKEY()
+  // Creo cliente http para mandar peticiones (podría usar http.Get() también)
+  //
+  // REVISAR: poner timeouts para la petición?
+  //
+  client := &http.Client{}
+  if nextPage != "" {
+      url += "?next_page=" + nextPage
+  }
+  // Armo la solicitud (cuerpo null porque no envío nada)
+  req, _ := http.NewRequest("GET", url, nil)
+  // Agrego header de autenticación (Bearer es un tipo de autenticación HTTP) 
+  req.Header.Add("Authorization", "Bearer "+key)
+  // Envío petición
+  resp, err := client.Do(req)
+  if err != nil {
+      return all, "", err
+  }
+	// Cierro el stream de datos del cuerpo (lo hago con defer para asegurarme que se ejecute al final)
+  defer resp.Body.Close()
+	// Leo el body de la respuesta
+  body, _ := io.ReadAll(resp.Body)
+  // Convierto el JSON del body en estructura de Go y lo guardo en r
+  if err := json.Unmarshal(body, &r); err != nil {
+      return all, "", err
+  }
+  // Recorro los r.items de la respuesta (ignoro el índice)
+  for _, it := range r.Items {
+    fFrom, _ := parseDollar(it.TargetFrom)
+    fTo, _   := parseDollar(it.TargetTo)
+    // Convierto el string time devuelto por la api (RFC3339 con nanosegundos) en un objeto time de go
+    t, _     := time.Parse(time.RFC3339Nano, it.Time)
+    // Agrego al array de Stock los datos traídos
+    all = append(all, Stock{
+      Ticker:     it.Ticker,
+      Company:    it.Company,
+      TargetFrom: fFrom,
+      TargetTo:   fTo,
+      Action:     it.Action,
+      Brokerage:  it.Brokerage,
+      RatingFrom: it.RatingFrom,
+      RatingTo:   it.RatingTo,
+      Time:       t,
+    })
+  }
+  return all, r.NextPage, nil
+}
+
 // Traigo todos los stocks de la API
 func fetchAllStocks() ([]Stock, error) {
   // Inicio array de estructuras tipo Stock (definidas en model.go)
@@ -43,7 +98,9 @@ func fetchAllStocks() ([]Stock, error) {
   var apiURL = getAPIURL()
   var apiKey = getAPIKEY()
 
+  cont := 0
   for {
+    cont++
     url := apiURL
     // Agrego parámetro next_page para obtener los datos siguientes
     if next != "" {
@@ -90,11 +147,13 @@ func fetchAllStocks() ([]Stock, error) {
     }
 	  // Controlo si no hay más datos para traer desde la API y paro el ciclo for
     //PARCHE PARA QUE NO TRAIGA INFINITOS (después lo arreglo, ahora solo quiero que funciones Dios)
-    if r.NextPage == "LAMR" {
+    if r.NextPage == "" {
       break
     }
     next = r.NextPage
+    fmt.Println("NEXT PAGE: ", next, "CONTADOR: ", cont)
   }
+
   return all, nil
 }
 

@@ -4,6 +4,10 @@
     <div class="space-x-2">
       <button @click="refreshAll" class="px-4 py-2 bg-blue-600 text-white rounded">Sync & Load</button>
       <button @click="getRecommendation" class="px-4 py-2 bg-green-600 text-white rounded">Recommend</button>
+      <div v-if="taskId">
+        Progreso: {{ status.pages_fetched }} páginas<br/>
+        Estado: {{ status.status }}
+      </div>
     </div>
 
     <div v-if="recommended" class="p-4 bg-green-100 rounded">
@@ -38,11 +42,11 @@ import { useStockStore } from './stores/stocks'
 import { storeToRefs } from 'pinia'
 
 const store = useStockStore()
-const { list: stocks, recommended } = storeToRefs(store)
+const { list: stocks, recommended, taskId, status } = storeToRefs(store)
 
 async function refreshAll() {
   await store.fetchAndStore()
-  await store.loadStocks()
+  //await store.loadStocks()
 }
 
 async function getRecommendation() {

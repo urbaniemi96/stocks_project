@@ -20,13 +20,26 @@ export const useStockStore = defineStore('stocks', {
   state: () => ({
     list: [] as Stock[],
     recommended: null as Stock | null,
+    taskId: null as string | null,
+    status: { status: '', pages_fetched: 0 },
   }),
   // Acciones para modificar estado
   actions: {
     // Disparo petición al fetch del back (para traer datos de la api y guardar en la bd)
     async fetchAndStore() {
       // dispara /fetch en el backend
-      await api.get('/fetch')
+      const res = await api.get('/fetch')
+      this.taskId = res.data.task_id
+
+      // Empiezo a pollear cada 2seg hasta que status == "done" o "error"
+      const interval = setInterval(async () => {
+        const st = await api.get(`/fetch/status/${this.taskId}`)
+        this.status = st.data
+        if (this.status.status !== 'in-progress') {
+          clearInterval(interval)
+          alert(`Descarga ${this.status.status}`)
+        }
+      }, 2000)
     },
     // Traigo los stocks guardados en la bd y los guardo en list (estado del store)
     async loadStocks() {
