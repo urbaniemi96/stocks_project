@@ -1,34 +1,34 @@
 package main
 
 import (
-  //"context"
-  "log"
-  "gorm.io/gorm"
-  "gorm.io/driver/postgres"
-  "gorm.io/gorm/clause"
+	//"context"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"log"
 )
 
 var db *gorm.DB
 
 // Inicio la conexión a la DB, creo la tabla stocks si no existe
 func initDB() {
-  var err error
-  dsn := getDBDSN() // En config.go
-  db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-  if err != nil {
-    log.Fatalf("Error al conectar a la db: %v", err)
-  }
-  // Creo tabla si no existe usando AutoMigrate
-  db.AutoMigrate(&Stock{}, &HistoricalPoint{})
-  if err != nil {
-    log.Fatalf("Error al crear tablas: %v", err)
-  }
+	var err error
+	dsn := getDBDSN() // En config.go
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Error al conectar a la db: %v", err)
+	}
+	// Creo tabla si no existe usando AutoMigrate
+	db.AutoMigrate(&Stock{}, &HistoricalPoint{})
+	if err != nil {
+		log.Fatalf("Error al crear tablas: %v", err)
+	}
 }
 
 func saveStocks(stocks []Stock) error {
-  // Inicio transacción con rollback automático en caso de error
+	// Inicio transacción con rollback automático en caso de error
 	return db.Transaction(func(tx *gorm.DB) error {
-    // Recorro los stocks
+		// Recorro los stocks
 		for _, s := range stocks {
 			// Si ya existe el ticker , actualiza los campos
 			if err := tx.Clauses(clause.OnConflict{
