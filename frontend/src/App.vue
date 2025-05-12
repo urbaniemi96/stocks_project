@@ -2,8 +2,9 @@
   <div class="p-8 space-y-6">
     <h1 class="text-2xl font-bold">Stock Dashboard</h1>
     <div class="space-x-2">
-      <button @click="refreshAll" class="px-4 py-2 bg-blue-600 text-white rounded">Sync & Load</button>
-      <button @click="getRecommendation" class="px-4 py-2 bg-green-600 text-white rounded">Recommend</button>
+      <button @click="refreshAll" class="px-4 py-2 bg-blue-600 text-white rounded">Traer de la API y cargar en la BD</button>
+      <button @click="enrichAll" class="px-4 py-2 bg-blue-600 text-white rounded">Enriquecer desde Yahoo (puede demorar horas)</button>
+      <button @click="getRecommendation" class="px-4 py-2 bg-green-600 text-white rounded">Recomendar</button>
       <div v-if="taskId">
         Progreso: {{ status.pages_fetched }} páginas<br/>
         Estado: {{ status.status }}
@@ -45,6 +46,10 @@ let dataTable: any = null
 async function refreshAll() {
   await store.fetchAndStore()
   //await store.loadStocks()
+}
+
+async function enrichAll() {
+  await store.fetchAndEnrich()
 }
 
 async function getRecommendation() {

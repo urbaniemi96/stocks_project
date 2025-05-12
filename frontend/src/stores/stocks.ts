@@ -33,13 +33,28 @@ export const useStockStore = defineStore('stocks', {
 
       // Empiezo a pollear cada 2seg hasta que status == "done" o "error"
       const interval = setInterval(async () => {
-        const st = await api.get(`/fetch/status/${this.taskId}`)
+        const st = await api.get(`/task/${this.taskId}`)
         this.status = st.data
         if (this.status.status !== 'in-progress') {
           clearInterval(interval)
           alert(`Descarga ${this.status.status}`)
         }
       }, 2000)
+    },
+    // Disparo petición para enriquecer la API con datos de Yahoo
+    async fetchAndEnrich() {
+      const res = await api.get('/enrich')
+      this.taskId = res.data.task_id
+
+      // Empiezo a pollear cada 3seg hasta que status == "done" o "error"
+      /*const interval = setInterval(async () => {
+        const st = await api.get(`/task/${this.taskId}`)
+        this.status = st.data
+        if (this.status.status !== 'in-progress') {
+          clearInterval(interval)
+          alert(`Enrich ${this.status.status}`)
+        }
+      }, 3000)*/
     },
     // Traigo los stocks guardados en la bd y los guardo en list (estado del store)
     async loadStocks() {

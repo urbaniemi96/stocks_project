@@ -73,7 +73,7 @@ func StartFetchHandler(c *gin.Context) {
     c.JSON(http.StatusAccepted, gin.H{"task_id": id})
 }
 
-// Handler para consultar el estado de la tarea
+// Handler para consultar el estado de una tarea
 func FetchStatusHandler(c *gin.Context) {
   // Obtengo id desde URL
   id := c.Param("id")
@@ -90,26 +90,6 @@ func FetchStatusHandler(c *gin.Context) {
   c.JSON(http.StatusOK, info)
 }
 
-
-// Manejador para obtener los stocks
-/*func getStocksHandler(c *gin.Context) {
-  // Traigo los stocks
-  stocks, err := fetchAllStocks()
-
-  if err != nil {
-    c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
-    return
-  }
-
-  // Guardo los stocks en la DB
-  if err := saveStocks(context.Background(), stocks); err != nil {
-    c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-    return
-  }
-
-  // Devuelvo todo Ok
-  c.JSON(http.StatusOK, stocks)
-}*/
 
 // Manejador para listar los stocks guardados en la BD
 func listStocksHandler(c *gin.Context) {
@@ -166,27 +146,32 @@ func listStocksHandler(c *gin.Context) {
 	})
 }
 
-// Manejador para listar los stocks guardados en la BD
-/*func listStocksHandler(c *gin.Context) {
-  rows, _ := db.Query(context.Background(), `SELECT ticker, company, target_from, target_to, action, brokerage, rating_from, rating_to, time FROM stocks`)
-  defer rows.Close()
+func StartEnrichHandler(c *gin.Context) {
+  // Genero un ID único para la tarea
+  taskID := uuid.New().String()
+  // Inicializo estructura de tarea en progreso
+  info := &TaskInfo{Status: "in-progress", PagesFetched: 0}
 
-  var all []Stock
-  for rows.Next() {
-    var s Stock
-    rows.Scan(&s.Ticker, &s.Company, &s.TargetFrom, &s.TargetTo,
-      &s.Action, &s.Brokerage, &s.RatingFrom, &s.RatingTo, &s.Time)
-    all = append(all, s)
-  }
-  c.JSON(http.StatusOK, all)
-}*/
+  // Hago lock del mutex del mapa de tareas
+  tasksMu.Lock()
+  // Escribo la tarea en el mapa de tareas (se pasa por referencia)
+  tasks[taskID] = info
+  tasksMu.Unlock()
 
-// Manejador para recomendar mejores stocks (REVISAR JUNTO CON EL ALGORITMO)
-/*func recommendHandler(c *gin.Context) {
-  best, err := recommendBest(context.Background())
-  if err != nil {
-    c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-    return
-  }
-  c.JSON(http.StatusOK, best)
-}*/
+  // Inicio goroutine
+  go func(taskID string) {
+    // Recorro los stock, e intento traer los datos
+    err := fetchAllHistories(taskID)
+    tasksMu.Lock()
+    defer tasksMu.Unlock()
+    ti := tasks[taskID]
+    if err != nil {
+      ti.Status = "error"
+      ti.Error = err.Error()
+    } else {
+      ti.Status = "done"
+    }
+  }(taskID)
+  // Devuelvo de inmediato el ID
+  c.JSON(202, gin.H{"task_id": taskID})
+}

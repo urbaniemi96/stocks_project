@@ -14,3 +14,14 @@ type Stock struct {
   RatingTo   string    `json:"rating_to"`
   Time       time.Time `json:"time"`
 }
+
+// Creo modelo de histórico de acciones con los precios en distintas fechas (para enriquecer los datos)
+type HistoricalPoint struct {
+  Ticker string    `gorm:"primaryKey"`
+  Date   time.Time `gorm:"primaryKey"`
+  Open   float64
+  High   float64
+  Low    float64 
+  Close  float64
+  Volume int64     
+}

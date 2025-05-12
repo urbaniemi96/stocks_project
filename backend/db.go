@@ -19,9 +19,9 @@ func initDB() {
     log.Fatalf("Error al conectar a la db: %v", err)
   }
   // Creo tabla si no existe usando AutoMigrate
-  db.AutoMigrate(&Stock{})
+  db.AutoMigrate(&Stock{}, &HistoricalPoint{})
   if err != nil {
-    log.Fatalf("Error al crear la tabla: %v", err)
+    log.Fatalf("Error al crear tablas: %v", err)
   }
 }
 
