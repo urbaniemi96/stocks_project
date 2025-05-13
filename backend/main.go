@@ -6,7 +6,7 @@ import (
 	//"fmt"
 )
 
-//Se ejecuta al hacer el go run
+// Se ejecuta al hacer el go run
 func main() {
 	// Conecto a la DB
 	initDB()
@@ -30,8 +30,12 @@ func main() {
 	//r.GET("/fetch", getStocksHandler) // Traigo datos de la API y guardo en la DB
 	r.GET("/fetch", StartFetchHandler)     // Traigo datos de la API y guardo en la DB
 	r.GET("/stocks", listStocksHandler)    // Muestro los datos guardados en la DB
+	r.GET("/stocks", listStocksHandler)    // Muestro los datos guardados en la DB
 	r.GET("/enrich", StartEnrichHandler)   // Muestro los datos guardados en la DB
 	r.GET("/task/:id", FetchStatusHandler) //Consulto el estado de la tarea con :id
+
+	//Traigo los históricos de un ticker
+	r.GET("/stocks/:ticker/detail", StockDetailHandler)
 
 	//r.GET("/recommend", recommendHandler) // Recomiendo mejor stock
 

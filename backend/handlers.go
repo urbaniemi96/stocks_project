@@ -7,7 +7,33 @@ import (
 	"github.com/google/uuid"
 	"net/http"
 	"strconv"
+	"time"
 )
+
+// ———————— 1) Tipos auxiliares ————————
+
+type HistoryFilters struct {
+    Days      int
+    StartDate *time.Time
+    EndDate   *time.Time
+    MinPrice  *float64
+    MaxPrice  *float64
+    MinVolume *int64
+    OrderDesc bool
+}
+
+type StockDetailResponse struct {
+    Stock              Stock                   `json:"stock"`
+    History            []HistoricalPoint       `json:"history"`
+    RiskReward         RiskRewardData          `json:"riskReward"`
+    RatingDistribution map[string]int          `json:"ratingDistribution"`
+}
+
+type RiskRewardData struct {
+    Labels       []string  `json:"labels"`
+    Volatilities []float64 `json:"volatilities"`
+    Potentials   []float64 `json:"potentials"`
+}
 
 // Inicia una goroutine que trae los stocks de la API y los guarda en la DB (de a una página a la vez)
 func StartFetchHandler(c *gin.Context) {
@@ -145,6 +171,236 @@ func listStocksHandler(c *gin.Context) {
 		"data":            stocks,
 	})
 }
+
+func StockDetailHandler(c *gin.Context) {
+    ticker := c.Param("ticker")
+
+    // 2.1) parseo y validación de filtros
+    filters, err := parseHistoryFilters(c)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // 2.2) Traer el registro de Stock
+    var stock Stock
+    res := db.First(&stock, "ticker = ?", ticker)
+    // Si no encontró ningún registro…
+    if res.RowsAffected == 0 {
+        c.JSON(http.StatusNotFound, gin.H{"error": "stock not found"})
+        return
+    }
+    // Si hubo un error distinto…
+    if res.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": res.Error.Error()})
+        return
+    }
+
+    // 2.3) Traer histórico con filtros
+    history, err := getHistory(ticker, filters)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    // 2.5) Calcular Risk/Reward
+    rr := calcRiskReward(history)
+
+    // 2.6) Distribución de ratings en todos los stocks
+    ratingDist, err := getRatingDistribution()
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    // 3) Armar y devolver la respuesta
+    resp := StockDetailResponse{
+        Stock:              stock,
+        History:            history,
+        RiskReward:         rr,
+        RatingDistribution: ratingDist,
+    }
+    c.JSON(http.StatusOK, resp)
+}
+
+
+func parseHistoryFilters(c *gin.Context) (HistoryFilters, error) {
+    days, _ := strconv.Atoi(c.DefaultQuery("days", "30"))
+
+    var hf HistoryFilters
+    hf.Days = days
+
+    if sd := c.Query("start_date"); sd != "" {
+        t, err := time.Parse("2006-01-02", sd)
+        if err != nil {
+            return hf, err
+        }
+        hf.StartDate = &t
+    }
+    if ed := c.Query("end_date"); ed != "" {
+        t, err := time.Parse("2006-01-02", ed)
+        if err != nil {
+            return hf, err
+        }
+        hf.EndDate = &t
+    }
+    if mp := c.Query("min_price"); mp != "" {
+        v, err := strconv.ParseFloat(mp, 64)
+        if err != nil {
+            return hf, err
+        }
+        hf.MinPrice = &v
+    }
+    if mp := c.Query("max_price"); mp != "" {
+        v, err := strconv.ParseFloat(mp, 64)
+        if err != nil {
+            return hf, err
+        }
+        hf.MaxPrice = &v
+    }
+    if mv := c.Query("min_volume"); mv != "" {
+        v, err := strconv.ParseInt(mv, 10, 64)
+        if err != nil {
+            return hf, err
+        }
+        hf.MinVolume = &v
+    }
+    hf.OrderDesc = c.DefaultQuery("order", "asc") == "desc"
+    return hf, nil
+}
+
+func getHistory(ticker string, f HistoryFilters) ([]HistoricalPoint, error) {
+    q := db.Model(&HistoricalPoint{}).
+        Where("ticker = ?", ticker)
+
+    if f.StartDate != nil {
+        q = q.Where("date >= ?", f.StartDate)
+    }
+    if f.EndDate != nil {
+        q = q.Where("date <= ?", f.EndDate)
+    }
+    if f.MinPrice != nil {
+        q = q.Where("close >= ?", *f.MinPrice)
+    }
+    if f.MaxPrice != nil {
+        q = q.Where("close <= ?", *f.MaxPrice)
+    }
+    if f.MinVolume != nil {
+        q = q.Where("volume >= ?", *f.MinVolume)
+    }
+
+    orderDir := "asc"
+    if f.OrderDesc {
+        orderDir = "desc"
+    }
+    q = q.Order("date " + orderDir).
+        Limit(f.Days)
+
+    var pts []HistoricalPoint
+    if err := q.Find(&pts).Error; err != nil {
+        return nil, err
+    }
+
+    // Si pedimos desc, invertimos el slice para devolver asc por JSON
+    if f.OrderDesc {
+        for i, j := 0, len(pts)-1; i < j; i, j = i+1, j-1 {
+            pts[i], pts[j] = pts[j], pts[i]
+        }
+    }
+    return pts, nil
+}
+
+func calcRiskReward(history []HistoricalPoint) RiskRewardData {
+    labels := make([]string, len(history))
+    vols := make([]float64, len(history))
+    pots := make([]float64, len(history))
+
+    for i, pt := range history {
+        labels[i] = pt.Date.Format("2006-01-02")
+        vols[i] = (pt.High - pt.Low) / pt.Open * 100
+        pots[i] = (pt.Close - pt.Open) / pt.Open * 100
+    }
+    return RiskRewardData{
+        Labels:       labels,
+        Volatilities: vols,
+        Potentials:   pots,
+    }
+}
+
+func getRatingDistribution() (map[string]int, error) {
+    rows, err := db.Model(&Stock{}).
+        Select("rating_to, count(*) as cnt").
+        Group("rating_to").
+        Rows()
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    m := make(map[string]int)
+    for rows.Next() {
+        var rating string
+        var cnt int
+        rows.Scan(&rating, &cnt)
+        m[rating] = cnt
+    }
+    return m, nil
+}
+
+
+
+/*func StockHistoryHandler(c *gin.Context) {
+	ticker := c.Param("ticker")
+	// rango de fechas
+	start := c.Query("start_date")
+	end := c.Query("end_date")
+
+	// filtros numéricos
+	minP := c.Query("min_price")
+	maxP := c.Query("max_price")
+	minV := c.Query("min_volume")
+
+	// orden y paginación
+	order := c.DefaultQuery("order", "asc")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	per, _ := strconv.Atoi(c.DefaultQuery("per_page", "30"))
+	offset := (page - 1) * per
+
+	var points []HistoricalPoint
+	q := db.Model(&HistoricalPoint{}).
+		Where("ticker = ?", ticker)
+
+	if start != "" {
+		q = q.Where("date >= ?", start)
+	}
+	if end != "" {
+		q = q.Where("date <= ?", end)
+	}
+	if minP != "" {
+		q = q.Where("close >= ?", minP)
+	}
+	if maxP != "" {
+		q = q.Where("close <= ?", maxP)
+	}
+	if minV != "" {
+		q = q.Where("volume >= ?", minV)
+	}
+
+	q = q.Order("date " + order).
+		Offset(offset).
+		Limit(per).
+		Find(&points)
+
+	if q.Error != nil {
+		c.JSON(500, gin.H{"error": q.Error.Error()})
+		return
+	}
+	if q.RowsAffected == 0 {
+		c.JSON(404, gin.H{"error": "No data", "ticker": ticker})
+		return
+	}
+	c.JSON(200, points)
+}*/
 
 func StartEnrichHandler(c *gin.Context) {
 	// Genero un ID único para la tarea
