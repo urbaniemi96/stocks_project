@@ -14,6 +14,22 @@ export interface Stock {
   time: string
 }
 
+// Interfaces del Detalle
+export interface HistoricalPoint { 
+  Date: string 
+  Close: number 
+}
+interface RiskRewardResponse { 
+  labels: string[]
+  volatilities: number[]
+  potentials: number[] 
+}
+export interface StockDetailResponse {
+  stock: Stock
+  history: HistoricalPoint[]
+  riskReward: RiskRewardResponse
+  ratingDistribution: Record<string, number>
+}
 // Defino store de pinia
 export const useStockStore = defineStore('stocks', {
   // Defino estado del store
@@ -22,6 +38,7 @@ export const useStockStore = defineStore('stocks', {
     recommended: null as Stock | null,
     taskId: null as string | null,
     status: { status: '', pages_fetched: 0 },
+    detail: null as StockDetailResponse | null,
   }),
   // Acciones para modificar estado
   actions: {
@@ -62,6 +79,20 @@ export const useStockStore = defineStore('stocks', {
       const res = await api.get<Stock[]>('/stocks')
       this.list = res.data 
     },
+
+    // Acción para cargar el detalle
+    async loadDetail(ticker: string, days = 30) {
+      try {
+        const { data } = await api.get<StockDetailResponse>(`/stocks/${ticker}/detail`, {
+          params: { days }
+        })
+        this.detail = data
+      } catch (error) {
+        this.detail = null
+        throw error
+      }
+    },
+
     // Llamo al back para recomendar una acción
     async computeRecommendation() {
       //const res = await api.get<Stock>('/recommend')

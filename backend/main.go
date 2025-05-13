@@ -30,7 +30,7 @@ func main() {
 	//r.GET("/fetch", getStocksHandler) // Traigo datos de la API y guardo en la DB
 	r.GET("/fetch", StartFetchHandler)     // Traigo datos de la API y guardo en la DB
 	r.GET("/stocks", listStocksHandler)    // Muestro los datos guardados en la DB
-	r.GET("/stocks", listStocksHandler)    // Muestro los datos guardados en la DB
+	//r.GET("/stocks", listStocksHandler)    // Muestro los datos guardados en la DB
 	r.GET("/enrich", StartEnrichHandler)   // Muestro los datos guardados en la DB
 	r.GET("/task/:id", FetchStatusHandler) //Consulto el estado de la tarea con :id
 
