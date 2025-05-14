@@ -1,68 +1,120 @@
 <template>
-  <div class="p-8">
-    <!-- Título y empresa -->
-    <h1 class="text-3xl font-bold">{{ stock?.ticker }} - {{ stock?.company }}</h1>
-    <p class="text-white-600 mb-4">
-      {{ stock?.brokerage }} {{ stock?.action }} targets from {{ stock?.target_from }} to {{ stock?.target_to }}
-    </p>
+  <div class="w-full mx-auto p-8 space-y-10">
+    <!-- Header -->
+    <header class="flex flex-col lg:flex-row lg:justify-between items-start lg:items-center gap-4">
+      <div>
+        <h1 class="text-5xl font-bold">{{ stock?.ticker }}</h1>
+        <p class="mt-1 text-xl text-gray-400">{{ stock?.company }}</p>
+      </div>
+      <div class="flex gap-4">
+        <div class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold">
+          {{ stock?.action }}
+        </div>
+        <div class="text-gray-500 self-center">
+          Broker: {{ stock?.brokerage }}
+        </div>
+      </div>
+    </header>
+
+    <!-- Candlestick Chart -->
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+      <h2 class="text-2xl font-semibold mb-4">Candlestick Chart (OHLC + Volume)</h2>
+      <div class="w-full h-96">
+        <CandleChart v-if="history.length" :history="history" />
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
+      </div>
+    </section>
 
     <!-- Overview -->
-    <div class="mt-6 grid grid-cols-2 gap-6">
-      <!-- Estadísticas básicas -->
-      <div class="p-4 bg-gray-900 rounded">
-        <h2 class="font-semibold mb-2">Overview (Last {{ days }} days)</h2>
-        <ul class="list-disc list-inside text-sm">
-          <li>Min Close: {{ stats.min.toFixed(2) }}</li>  <!-- Calculado en script -->
-          <li>Max Close: {{ stats.max.toFixed(2) }}</li>
-          <li>Avg Close: {{ stats.avg.toFixed(2) }}</li>
-          <li>
-            Trend:
-            <span :class="trend >= 0 ? 'text-green-600' : 'text-red-600'">
-              {{ trend >= 0 ? '+' : '' }}{{ trend.toFixed(2) }}%
-            </span>
-          </li>
-        </ul>
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+      <h2 class="text-2xl font-semibold mb-4">Overview (Last {{ days }} days)</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-gray-300">
+        <div>
+          <p class="text-sm uppercase">Min Close</p>
+          <p class="text-lg font-medium">{{ stats.min.toFixed(2) }}</p>
+        </div>
+        <div>
+          <p class="text-sm uppercase">Max Close</p>
+          <p class="text-lg font-medium">{{ stats.max.toFixed(2) }}</p>
+        </div>
+        <div>
+          <p class="text-sm uppercase">Avg Close</p>
+          <p class="text-lg font-medium">{{ stats.avg.toFixed(2) }}</p>
+        </div>
+        <div class="sm:col-span-3">
+          <p class="text-sm uppercase">Trend</p>
+          <p :class="['text-lg font-medium', trend >= 0 ? 'text-green-400' : 'text-red-400']">
+            {{ trend >= 0 ? '+' : '' }}{{ trend.toFixed(2) }}%
+          </p>
+        </div>
       </div>
+    </section>
 
-      <!-- Close Price Chart -->
-      <div class="p-4 bg-gray-900 rounded">
-        <h2 class="font-semibold mb-2">Close Price</h2>
-        <HistoryChart v-if="labels.length" :labels="labels" :data="closeData" />  <!-- Usamos labels y closeData computados -->
-        <div v-else class="text-center text-sm text-gray-500">No data</div>
+    <!-- Close Price Chart -->
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+      <h2 class="text-2xl font-semibold mb-4">Close Price Over Time</h2>
+      <div class="w-full h-96">
+        <HistoryChart v-if="labels.length" :labels="labels" :data="closeData" />
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
       </div>
+    </section>
 
-      <!-- Volatility Chart -->
-      <div class="p-4 bg-gray-900 rounded">
-        <h2 class="font-semibold mb-2">Volatility (%)</h2>
+    <!-- Volatility Chart -->
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+      <h2 class="text-2xl font-semibold mb-4">Volatility (%)</h2>
+      <div class="w-full h-64">
         <HistoryChart
           v-if="riskReward.labels.length"
           :labels="riskReward.labels"
           :data="riskReward.volatilities"
         />
-        <div v-else class="text-center text-sm text-gray-500">No data</div>
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
       </div>
+    </section>
 
-      <!-- Potential Chart -->
-      <div class="p-4 bg-gray-900 rounded">
-        <h2 class="font-semibold mb-2">Potential (%)</h2>
+    <!-- Potential Chart -->
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+      <h2 class="text-2xl font-semibold mb-4">Potential (%)</h2>
+      <div class="w-full h-64">
         <HistoryChart
           v-if="riskReward.labels.length"
           :labels="riskReward.labels"
           :data="riskReward.potentials"
         />
-        <div v-else class="text-center text-sm text-gray-500">No data</div>
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
       </div>
+    </section>
 
-      <!-- Rating Distribution -->
-      <div class="p-4 bg-gray-900 rounded col-span-2">
-        <h2 class="font-semibold mb-2">Rating Distribution</h2>
-        <ul class="grid grid-cols-3 gap-2 text-sm">
-          <li v-for="(count, rating) in ratingDistribution" :key="rating">
-            <span class="font-medium">{{ rating }}</span>: {{ count }}
-          </li>
-        </ul>
+    <!-- Risk vs Reward -->
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+      <h2 class="text-2xl font-semibold mb-4">Risk vs Reward</h2>
+      <div class="w-full h-80">
+        <ScatterChart
+          v-if="riskReward.labels.length"
+          :potentials="riskReward.potentials"
+          :volatilities="riskReward.volatilities"
+        />
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
       </div>
-    </div>
+    </section>
+
+    <!-- Rating Distribution: Bar Chart -->
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+      <h2 class="text-2xl font-semibold mb-4">Rating Distribution (Bar)</h2>
+      <div class="w-full h-64">
+        <RatingChart v-if="Object.keys(ratingDistribution).length" :distribution="ratingDistribution" type="bar" />
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
+      </div>
+    </section>
+
+    <!-- Rating Distribution: Pie Chart -->
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+      <h2 class="text-2xl font-semibold mb-4">Rating Distribution (Pie)</h2>
+      <div class="w-full h-64">
+        <RatingChart v-if="Object.keys(ratingDistribution).length" :distribution="ratingDistribution" type="pie" />
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -70,7 +122,10 @@
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStockStore } from '../stores/stocks'
+import CandleChart from '../components/CandleChart.vue'
 import HistoryChart from '../components/HistoryChart.vue'
+import ScatterChart from '../components/ScatterChart.vue'
+import RatingChart from '../components/RatingChart.vue'
 import type { HistoricalPoint } from '../stores/stocks'
 
 const route = useRoute()
@@ -81,7 +136,7 @@ const stocksStore = useStockStore()
 const detail = computed(() => stocksStore.detail)
 
 const stock = computed(() => detail.value?.stock)
-const history = computed(() => detail.value?.history ?? [])
+const history = computed<HistoricalPoint[]>(() => detail.value?.history ?? [])
 const riskReward = computed(() => detail.value?.riskReward ?? { labels: [], volatilities: [], potentials: [] })
 const ratingDistribution = computed(() => detail.value?.ratingDistribution ?? {})
 

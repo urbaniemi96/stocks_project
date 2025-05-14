@@ -30,6 +30,8 @@ onMounted(() => {
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: true,
       scales: {
         x: { display: true, title: { display: true, text: 'Date' } },
         y: { display: true, title: { display: true, text: 'Price' } }

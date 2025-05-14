@@ -18,6 +18,10 @@ export interface Stock {
 export interface HistoricalPoint { 
   Date: string 
   Close: number 
+  High: number 
+  Low: number 
+  Open: number 
+  Volume: number 
 }
 interface RiskRewardResponse { 
   labels: string[]
