@@ -16,15 +16,6 @@
       </div>
     </header>
 
-    <!-- Candlestick Chart -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
-      <h2 class="text-2xl font-semibold mb-4">Candlestick Chart (OHLC + Volume)</h2>
-      <div class="w-full h-96">
-        <CandleChart v-if="history.length" :history="history" />
-        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
-      </div>
-    </section>
-
     <!-- Overview -->
     <section class="bg-gray-800 rounded-lg p-6 shadow-md">
       <h2 class="text-2xl font-semibold mb-4">Overview (Last {{ days }} days)</h2>
@@ -50,19 +41,28 @@
       </div>
     </section>
 
+    <!-- Candlestick Chart -->
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
+      <h2 class="text-2xl font-semibold mb-4">Candlestick Chart (OHLC + Volume)</h2>
+      <div class="w-200 h-100">
+        <CandleChart v-if="history.length" :history="history" />
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
+      </div>
+    </section>
+
     <!-- Close Price Chart -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
       <h2 class="text-2xl font-semibold mb-4">Close Price Over Time</h2>
-      <div class="w-full h-96">
+      <div class="w-200 h-100">
         <HistoryChart v-if="labels.length" :labels="labels" :data="closeData" />
         <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
       </div>
     </section>
 
     <!-- Volatility Chart -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
       <h2 class="text-2xl font-semibold mb-4">Volatility (%)</h2>
-      <div class="w-full h-64">
+      <div class="w-200 h-100">
         <HistoryChart
           v-if="riskReward.labels.length"
           :labels="riskReward.labels"
@@ -73,9 +73,9 @@
     </section>
 
     <!-- Potential Chart -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
       <h2 class="text-2xl font-semibold mb-4">Potential (%)</h2>
-      <div class="w-full h-64">
+      <div class="w-200 h-100">
         <HistoryChart
           v-if="riskReward.labels.length"
           :labels="riskReward.labels"
@@ -86,9 +86,9 @@
     </section>
 
     <!-- Risk vs Reward -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
       <h2 class="text-2xl font-semibold mb-4">Risk vs Reward</h2>
-      <div class="w-full h-80">
+      <div class="w-200 h-100">
         <ScatterChart
           v-if="riskReward.labels.length"
           :potentials="riskReward.potentials"
@@ -99,19 +99,10 @@
     </section>
 
     <!-- Rating Distribution: Bar Chart -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
-      <h2 class="text-2xl font-semibold mb-4">Rating Distribution (Bar)</h2>
-      <div class="w-full h-64">
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
+      <h2 class="text-2xl font-semibold mb-4">Rating Distribution</h2>
+      <div class="w-200 h-100">
         <RatingChart v-if="Object.keys(ratingDistribution).length" :distribution="ratingDistribution" type="bar" />
-        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
-      </div>
-    </section>
-
-    <!-- Rating Distribution: Pie Chart -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
-      <h2 class="text-2xl font-semibold mb-4">Rating Distribution (Pie)</h2>
-      <div class="w-full h-64">
-        <RatingChart v-if="Object.keys(ratingDistribution).length" :distribution="ratingDistribution" type="pie" />
         <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
       </div>
     </section>

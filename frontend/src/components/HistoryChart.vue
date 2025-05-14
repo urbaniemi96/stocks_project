@@ -1,6 +1,6 @@
 <template>
   <div>
-    <canvas ref="canvas"></canvas>
+    <canvas ref="canvas" class="h-full w-full"></canvas>
   </div>
 </template>
 
@@ -31,7 +31,7 @@ onMounted(() => {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       scales: {
         x: { display: true, title: { display: true, text: 'Date' } },
         y: { display: true, title: { display: true, text: 'Price' } }

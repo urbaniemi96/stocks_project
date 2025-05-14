@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-// ———————— 1) Tipos auxiliares ————————
-
 type HistoryFilters struct {
     Days      int
     StartDate *time.Time
