@@ -15,7 +15,7 @@
         </div>
       </div>
     </header>
-
+    <BackButton />
     <!-- Filtros -->
     <section class="bg-gray-800 rounded-lg p-6 shadow-md space-y-4">
       <h2 class="text-2xl font-semibold text-white">Filtros</h2>
@@ -192,6 +192,7 @@ import HistoryChart from '../components/HistoryChart.vue'
 import ScatterChart from '../components/ScatterChart.vue'
 import RatingChart from '../components/RatingChart.vue'
 import type { HistoricalPoint, HistoryFilters } from '../stores/stocks'
+import BackButton from '../components/BackButton.vue'
 
 const route = useRoute()
 const ticker = route.params.ticker as string
