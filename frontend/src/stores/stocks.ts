@@ -1,6 +1,16 @@
 import { defineStore } from 'pinia' // Para definir un estado compartido
 import { api } from '../services/api' // Mi api axios para peticiones
 
+export interface HistoryFilters {
+  days: number
+  start_date?: string
+  end_date?: string
+  min_price?: number | null
+  max_price?: number | null
+  min_volume?: number | null
+  order: 'asc' | 'desc'
+}
+
 // Defino interfaz stock de typescript
 export interface Stock {
   ticker: string
@@ -85,11 +95,17 @@ export const useStockStore = defineStore('stocks', {
     },
 
     // Acción para cargar el detalle
-    async loadDetail(ticker: string, days = 30) {
+    async loadDetail(ticker: string, filters: HistoryFilters) {
       try {
-        const { data } = await api.get<StockDetailResponse>(`/stocks/${ticker}/detail`, {
-          params: { days }
+        // Construir query params
+        const params = new URLSearchParams()
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== '') {
+            params.append(key, String(value))
+          }
         })
+        const url = `/stocks/${ticker}/detail?${params.toString()}`
+        const { data } = await api.get<StockDetailResponse>(url)
         this.detail = data
       } catch (error) {
         this.detail = null

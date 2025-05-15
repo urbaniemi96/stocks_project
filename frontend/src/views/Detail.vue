@@ -16,9 +16,83 @@
       </div>
     </header>
 
+    <!-- Filtros -->
+    <section class="bg-gray-800 rounded-lg p-6 shadow-md space-y-4">
+      <h2 class="text-2xl font-semibold text-white">Filtros</h2>
+      <div class="flex items-center justify-center gap-4 text-white">
+        <!--div>
+          <label class="block text-sm">Días</label>
+          <input
+            type="number"
+            min="1"
+            v-model.number="filters.days"
+            class="w-full mt-1 p-2 bg-gray-700 rounded"
+          />
+        </div-->
+        <div>
+          <label class="block text-sm">Fecha inicio</label>
+          <input
+            type="date"
+            v-model="filters.start_date"
+            class="w-full mt-1 p-2 bg-gray-700 rounded"
+          />
+        </div>
+        <div>
+          <label class="block text-sm">Fecha fin</label>
+          <input
+            type="date"
+            v-model="filters.end_date"
+            class="w-full mt-1 p-2 bg-gray-700 rounded"
+          />
+        </div>
+        <!--div>
+          <label class="block text-sm">Orden</label>
+          <select
+            v-model="filters.order"
+            class="w-full mt-1 p-2 bg-gray-700 rounded"
+          >
+            <option value="asc">Ascendente</option>
+            <option value="desc">Descendente</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm">Precio mínimo</label>
+          <input
+            type="number"
+            step="0.01"
+            v-model.number="filters.min_price"
+            class="w-full mt-1 p-2 bg-gray-700 rounded"
+          />
+        </div>
+        <div>
+          <label class="block text-sm">Precio máximo</label>
+          <input
+            type="number"
+            step="0.01"
+            v-model.number="filters.max_price"
+            class="w-full mt-1 p-2 bg-gray-700 rounded"
+          />
+        </div>
+        <div>
+          <label class="block text-sm">Volumen mínimo</label>
+          <input
+            type="number"
+            v-model.number="filters.min_volume"
+            class="w-full mt-1 p-2 bg-gray-700 rounded"
+          />
+        </div-->
+        <button
+          @click="applyFilters"
+          class="mt-4 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold"
+        >
+          Buscar
+        </button>
+      </div>
+    </section>
+
     <!-- Overview -->
     <section class="bg-gray-800 rounded-lg p-6 shadow-md">
-      <h2 class="text-2xl font-semibold mb-4">Overview (Last {{ days }} days)</h2>
+      <h2 class="text-2xl font-semibold mb-4">Overview (Last 30 days)</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-gray-300">
         <div>
           <p class="text-sm uppercase">Min Close</p>
@@ -110,21 +184,39 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStockStore } from '../stores/stocks'
 import CandleChart from '../components/CandleChart.vue'
 import HistoryChart from '../components/HistoryChart.vue'
 import ScatterChart from '../components/ScatterChart.vue'
 import RatingChart from '../components/RatingChart.vue'
-import type { HistoricalPoint } from '../stores/stocks'
+import type { HistoricalPoint, HistoryFilters } from '../stores/stocks'
 
 const route = useRoute()
 const ticker = route.params.ticker as string
-const days = 30
 
 const stocksStore = useStockStore()
 const detail = computed(() => stocksStore.detail)
+
+// Calculamos hoy y hace un mes en formato YYYY-MM-DD
+const today = new Date()
+const monthAgo = new Date()
+monthAgo.setMonth(monthAgo.getMonth() - 1)
+
+// Función anonima para devolver solo la fecha de un Date
+const formatISO = (d: Date) => d.toISOString().slice(0, 10)
+
+// Estado reactivo para los filtros, con valores por defecto
+const filters = reactive<HistoryFilters>({
+  days: 30,
+  start_date: formatISO(monthAgo),  // Fecha de hace un mes
+  end_date:   formatISO(today),     // Fecha de hoy
+  min_price: null,
+  max_price: null,
+  min_volume: null,
+  order: 'asc'
+})
 
 const stock = computed(() => detail.value?.stock)
 const history = computed<HistoricalPoint[]>(() => detail.value?.history ?? [])
@@ -153,12 +245,22 @@ const trend = computed(() => {
   return first ? ((last - first) / first) * 100 : 0
 })
 
-onMounted(async () => {
+// Función que recarga el detalle aplicando los filtros
+async function applyFilters() {
   try {
+    await stocksStore.loadDetail(ticker, { ...filters })
+  } catch (err) {
+    console.error('Error al aplicar filtros:', err)
+  }
+}
+
+onMounted(async () => {
+  applyFilters()
+  /*try {
     await stocksStore.loadDetail(ticker, days)  // Llamado centralizado al store
   } catch (err) {
     console.error('Error loading stock detail:', err)
-  }
+  }*/
 })
 </script>
 

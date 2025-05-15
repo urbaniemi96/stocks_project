@@ -40,11 +40,18 @@ onMounted(() => {
   })
 })
 
-// Actualiza chart si props cambian
+// Actualiza chart si los datos o los labels cambian
 watch(
   () => props.data,
   (newData) => {
     chart.data.datasets[0].data = newData
+    chart.update()
+  }
+)
+watch(
+  () => props.labels,
+  (newLabel) => {
+    chart.data.labels = newLabel
     chart.update()
   }
 )

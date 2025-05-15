@@ -295,6 +295,7 @@ func getHistory(ticker string, f HistoryFilters) ([]HistoricalPoint, error) {
         Limit(f.Days)
 
     var pts []HistoricalPoint
+		// Busco los historicos
     if err := q.Find(&pts).Error; err != nil {
         return nil, err
     }
@@ -326,6 +327,7 @@ func calcRiskReward(history []HistoricalPoint) RiskRewardData {
 }
 
 func getRatingDistribution() (map[string]int, error) {
+	// Obtengo los ratings agrupados y contada su cantidad
     rows, err := db.Model(&Stock{}).
         Select("rating_to, count(*) as cnt").
         Group("rating_to").
@@ -335,6 +337,7 @@ func getRatingDistribution() (map[string]int, error) {
     }
     defer rows.Close()
 
+		// Guardo en un map
     m := make(map[string]int)
     for rows.Next() {
         var rating string

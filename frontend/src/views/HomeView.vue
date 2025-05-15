@@ -36,6 +36,9 @@ import $ from 'jquery'
 import 'datatables.net'
 import { useStockStore } from '../stores/stocks'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const store = useStockStore()
 const {recommended, taskId, status } = storeToRefs(store)
@@ -65,12 +68,29 @@ onMounted(() => {
       { data: 'company' },
       { data: 'target_from' },
       { data: 'target_to' },
+      {
+        data: null,
+        orderable: false,
+        searchable: false,
+        defaultContent: `
+          <button class="view-detail px-2 py-1 bg-indigo-600 text-white rounded">
+            Ver detalle
+          </button>
+        `
+      }
     ],
     order: [[0, 'asc']],
     pageLength: 10,
     lengthMenu: [[10, 20, 50], [10, 20, 50]],
   })
+  // 2. Delegar el clic del botón para redirigir vía Vue Router
+  $(stocksTable.value!).on('click', 'button.view-detail', function() {
+    const rowData = dataTable.row($(this).closest('tr')).data()
+    // Asume que tu ruta se llama 'StockDetail' y recibe el id en params
+    router.push({ name: 'stock-detail', params: { ticker: rowData.ticker } })
+  })
 })
+
 
 onBeforeUnmount(() => {
   if (dataTable) dataTable.destroy(true)
