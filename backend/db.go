@@ -10,16 +10,16 @@ import (
 
 var db *gorm.DB
 
-// Inicio la conexión a la DB, creo la tabla stocks si no existe
+// Inicio la conexión a la DB, creo las tablas si no existen
 func initDB() {
 	var err error
-	dsn := getDBDSN() // En config.go
+	dsn := getDBDSN() 
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Error al conectar a la db: %v", err)
 	}
-	// Creo tabla si no existe usando AutoMigrate
-	db.AutoMigrate(&Stock{}, &HistoricalPoint{})
+	// Creo tablas (si no existen) de stocks, historial, y recomendaciones
+	db.AutoMigrate(&Stock{}, &HistoricalPoint{}, &Recommendation{})
 	if err != nil {
 		log.Fatalf("Error al crear tablas: %v", err)
 	}
@@ -41,31 +41,3 @@ func saveStocks(stocks []Stock) error {
 	})
 }
 
-/*func saveStocks(ctx context.Context, stocks []Stock) error {
-  // Inicio transacción (con contexto raiz vacío)
-  tx, err := db.Begin(ctx)
-  if err != nil {
-	  return err
-  }
-  // Preparo un rollback en caso de que la transacción falle
-  defer tx.Rollback(ctx)
-
-  for _, s := range stocks {
-	// Ejecuto las consultas con placeholder para los parámetros
-    _, err := tx.Exec(ctx,
-	`UPSERT INTO stocks (
-		ticker, company, target_from, target_to, action,
-		brokerage, rating_from, rating_to, time
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-	s.Ticker, s.Company, s.TargetFrom, s.TargetTo,
-	s.Action, s.Brokerage, s.RatingFrom, s.RatingTo, s.Time,
-	)
-    if err != nil {
-	    return err
-	  }
-  }
-  retur := tx.Commit(ctx)
-
-  // Al hacer el commit, el rollback del defer queda sin efecto (el commit primero se hace, y DESPUES se retorna su valor (por más que que defer se ejecute antes de retornar))
-  return retur
-}*/

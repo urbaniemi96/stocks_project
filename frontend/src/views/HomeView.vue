@@ -4,16 +4,12 @@
     <div class="space-x-2">
       <button @click="refreshAll" class="px-4 py-2 bg-blue-600 text-white rounded">Traer de la API y cargar en la BD</button>
       <button @click="enrichAll" class="px-4 py-2 bg-blue-600 text-white rounded">Enriquecer desde Yahoo (puede demorar horas)</button>
-      <button @click="getRecommendation" class="px-4 py-2 bg-green-600 text-white rounded">Recomendar</button>
+      <button @click="showRecommendations" class="px-4 py-2 bg-green-600 text-white rounded">Mostrar Recomendaciones</button>
+      <button @click="recalcRecommendations" class="px-4 py-2 bg-green-600 text-white rounded">Recalcular Reecomendaciones</button>
       <div v-if="taskId">
         Progreso: {{ status.pages_fetched }} páginas<br/>
         Estado: {{ status.status }}
       </div>
-    </div>
-
-    <div v-if="recommended" class="p-4 bg-green-100 rounded">
-      <strong>Top Pick:</strong> {{ recommended.ticker }} 
-      (Δ {{ (recommended.target_to - recommended.target_from).toFixed(2) }})
     </div>
 
     <table ref="stocksTable" class="min-w-full bg-white text-gray-800 text-sm">
@@ -41,7 +37,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const store = useStockStore()
-const {recommended, taskId, status } = storeToRefs(store)
+const { taskId, status } = storeToRefs(store)
 
 const stocksTable = ref<HTMLTableElement>()
 let dataTable: any = null
@@ -54,8 +50,12 @@ async function enrichAll() {
   await store.fetchAndEnrich()
 }
 
-async function getRecommendation() {
-  await store.computeRecommendation()
+async function showRecommendations() {
+  router.push({ name: 'Recommendations' }) 
+}
+
+async function recalcRecommendations() {
+  await store.triggerRecalculate()
 }
 
 onMounted(() => {
@@ -86,9 +86,10 @@ onMounted(() => {
   // 2. Delegar el clic del botón para redirigir vía Vue Router
   $(stocksTable.value!).on('click', 'button.view-detail', function() {
     const rowData = dataTable.row($(this).closest('tr')).data()
-    // Asume que tu ruta se llama 'StockDetail' y recibe el id en params
     router.push({ name: 'stock-detail', params: { ticker: rowData.ticker } })
   })
+
+
 })
 
 

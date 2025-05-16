@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import StockDetailView from '../views/Detail.vue'
+import RecommendationsView from '../views/RecommendationsView.vue'
 
 const routes: RouteRecordRaw[] = [
   { path: '/', 
@@ -14,6 +15,10 @@ const routes: RouteRecordRaw[] = [
     component: StockDetailView,
     // `ticker` queda disponible en route.params.ticker
   },
+  { 
+    path: '/recommendations', 
+    name: 'Recommendations', 
+    component: RecommendationsView },
 ]
 
 export const router = createRouter({

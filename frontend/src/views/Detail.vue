@@ -1,6 +1,5 @@
 <template>
   <div class="w-full mx-auto p-8 space-y-10">
-    <!-- Header -->
     <header class="flex flex-col lg:flex-row lg:justify-between items-start lg:items-center gap-4">
       <div>
         <h1 class="text-5xl font-bold">{{ stock?.ticker }}</h1>

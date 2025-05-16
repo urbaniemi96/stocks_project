@@ -44,27 +44,35 @@ export interface StockDetailResponse {
   riskReward: RiskRewardResponse
   ratingDistribution: Record<string, number>
 }
+
+// Recomendaciones
+export interface Recommendation {
+  Ticker: string
+  Score: number
+  UpdatedAt: string
+}
+
 // Defino store de pinia
 export const useStockStore = defineStore('stocks', {
   // Defino estado del store
   state: () => ({
     list: [] as Stock[],
-    recommended: null as Stock | null,
     taskId: null as string | null,
     status: { status: '', pages_fetched: 0 },
     detail: null as StockDetailResponse | null,
+    recommendations: [] as Recommendation[],
   }),
   // Acciones para modificar estado
   actions: {
     // Disparo petición al fetch del back (para traer datos de la api y guardar en la bd)
     async fetchAndStore() {
       // dispara /fetch en el backend
-      const res = await api.get('/fetch')
+      const res = await api.get('/admin/fetch')
       this.taskId = res.data.task_id
 
       // Empiezo a pollear cada 2seg hasta que status == "done" o "error"
       const interval = setInterval(async () => {
-        const st = await api.get(`/task/${this.taskId}`)
+        const st = await api.get(`/admin/task/${this.taskId}`)
         this.status = st.data
         if (this.status.status !== 'in-progress') {
           clearInterval(interval)
@@ -74,12 +82,12 @@ export const useStockStore = defineStore('stocks', {
     },
     // Disparo petición para enriquecer la API con datos de Yahoo
     async fetchAndEnrich() {
-      const res = await api.get('/enrich')
+      const res = await api.get('/admin/enrich')
       this.taskId = res.data.task_id
 
       // Empiezo a pollear cada 3seg hasta que status == "done" o "error"
       /*const interval = setInterval(async () => {
-        const st = await api.get(`/task/${this.taskId}`)
+        const st = await api.get(`/admin/task/${this.taskId}`)
         this.status = st.data
         if (this.status.status !== 'in-progress') {
           clearInterval(interval)
@@ -113,10 +121,16 @@ export const useStockStore = defineStore('stocks', {
       }
     },
 
-    // Llamo al back para recomendar una acción
-    async computeRecommendation() {
-      //const res = await api.get<Stock>('/recommend')
-      //this.recommended = res.data
+    // Disparo recalculo de recomendaciones
+    async triggerRecalculate() {
+      await api.post('/admin/recalculate')
+      //MOSTRAR MENSAJE 
+    },
+
+    // Traigo las top-20 recomendaciones 
+    async loadTopRecommendations() {
+      const res = await api.get<Recommendation[]>('/recommendations/top20')
+      this.recommendations = res.data
     },
   },
 })

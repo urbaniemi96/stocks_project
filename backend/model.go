@@ -25,3 +25,10 @@ type HistoricalPoint struct {
 	Close  float64
 	Volume int64
 }
+
+// Creo el modelo de recomendaciones para las acciones
+type Recommendation struct {
+    Ticker    string    `gorm:"primaryKey"`
+    Score     float64   `gorm:"not null"`
+    UpdatedAt time.Time `gorm:"autoUpdateTime"`
+}

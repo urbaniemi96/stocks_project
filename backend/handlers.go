@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"log"
 )
 
 type HistoryFilters struct {
@@ -326,8 +327,8 @@ func calcRiskReward(history []HistoricalPoint) RiskRewardData {
     }
 }
 
+// Obtengo los ratings agrupados y contada su cantidad
 func getRatingDistribution() (map[string]int, error) {
-	// Obtengo los ratings agrupados y contada su cantidad
     rows, err := db.Model(&Stock{}).
         Select("rating_to, count(*) as cnt").
         Group("rating_to").
@@ -348,61 +349,7 @@ func getRatingDistribution() (map[string]int, error) {
     return m, nil
 }
 
-
-
-/*func StockHistoryHandler(c *gin.Context) {
-	ticker := c.Param("ticker")
-	// rango de fechas
-	start := c.Query("start_date")
-	end := c.Query("end_date")
-
-	// filtros numéricos
-	minP := c.Query("min_price")
-	maxP := c.Query("max_price")
-	minV := c.Query("min_volume")
-
-	// orden y paginación
-	order := c.DefaultQuery("order", "asc")
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	per, _ := strconv.Atoi(c.DefaultQuery("per_page", "30"))
-	offset := (page - 1) * per
-
-	var points []HistoricalPoint
-	q := db.Model(&HistoricalPoint{}).
-		Where("ticker = ?", ticker)
-
-	if start != "" {
-		q = q.Where("date >= ?", start)
-	}
-	if end != "" {
-		q = q.Where("date <= ?", end)
-	}
-	if minP != "" {
-		q = q.Where("close >= ?", minP)
-	}
-	if maxP != "" {
-		q = q.Where("close <= ?", maxP)
-	}
-	if minV != "" {
-		q = q.Where("volume >= ?", minV)
-	}
-
-	q = q.Order("date " + order).
-		Offset(offset).
-		Limit(per).
-		Find(&points)
-
-	if q.Error != nil {
-		c.JSON(500, gin.H{"error": q.Error.Error()})
-		return
-	}
-	if q.RowsAffected == 0 {
-		c.JSON(404, gin.H{"error": "No data", "ticker": ticker})
-		return
-	}
-	c.JSON(200, points)
-}*/
-
+// Inicio goroutine para traer los datos históricos de cada stock desde Yahoo Finance
 func StartEnrichHandler(c *gin.Context) {
 	// Genero un ID único para la tarea
 	taskID := uuid.New().String()
@@ -431,4 +378,23 @@ func StartEnrichHandler(c *gin.Context) {
 	}(taskID)
 	// Devuelvo de inmediato el ID
 	c.JSON(202, gin.H{"task_id": taskID})
+}
+
+func RecalculateRecommendationsHandler(c *gin.Context) {
+	// Disparo goroutine para recalcular las recomendaciones
+    go func() {
+        if err := RecalculateRecommendations(); err != nil {
+            log.Printf("Error recalculando recomendaciones: %v", err)
+        }
+    }()
+    c.JSON(http.StatusAccepted, gin.H{"status": "started"})
+}
+
+func TopRecommendationsHandler(c *gin.Context) {
+    var recs []Recommendation
+    if err := db.Order("score DESC").Limit(20).Find(&recs).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, recs)
 }
