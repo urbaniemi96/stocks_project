@@ -1,24 +1,26 @@
 <template>
-  <div class="w-full mx-auto p-8 space-y-10">
+  <div class="container mx-auto p-8 space-y-10">
     <header class="flex flex-col lg:flex-row lg:justify-between items-start lg:items-center gap-4">
       <div>
-        <h1 class="text-5xl font-bold">{{ stock?.ticker }}</h1>
-        <p class="mt-1 text-xl text-gray-400">{{ stock?.company }}</p>
+        <h1 class="text-4xl font-extrabold text-gray-900 dark:text-gray-100">{{ stock?.ticker }}</h1>
+        <p class="mt-2 text-lg font-bold text-gray-600 dark:text-gray-300">{{ stock?.company }}</p>
       </div>
       <div class="flex gap-4">
-        <div class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold">
+        <div class="bg-indigo-600 text-white dark:text-gray-300 px-4 py-2 rounded-md font-semibold">
           {{ stock?.action }}
         </div>
-        <div class="text-gray-500 self-center">
+        <div class="text-gray-700 dark:text-gray-300 self-center">
           Broker: {{ stock?.brokerage }}
         </div>
       </div>
     </header>
     <BackButton />
+    <TopButton />
+    <HomeButton />
     <!-- Filtros -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md space-y-4">
-      <h2 class="text-2xl font-semibold text-white">Filtros</h2>
-      <div class="flex items-center justify-center gap-4 text-white">
+    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Filtros</h2>
+      <div class="flex items-end justify-center gap-4 text-gray-700 dark:text-gray-300">
         <!--div>
           <label class="block text-sm">Días</label>
           <input
@@ -29,19 +31,19 @@
           />
         </div-->
         <div>
-          <label class="block text-sm">Fecha inicio</label>
+          <label class="block text-m">Fecha inicio</label>
           <input
             type="date"
             v-model="filters.start_date"
-            class="w-full mt-1 p-2 bg-gray-700 rounded"
+            class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-center"
           />
         </div>
         <div>
-          <label class="block text-sm">Fecha fin</label>
+          <label class="block text-m">Fecha fin</label>
           <input
             type="date"
             v-model="filters.end_date"
-            class="w-full mt-1 p-2 bg-gray-700 rounded"
+            class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-center"
           />
         </div>
         <!--div>
@@ -82,32 +84,32 @@
         </div-->
         <button
           @click="applyFilters"
-          class="mt-4 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold"
+          class="mt-4 bg-blue-600 hover:bg-blue-500 text-white dark:text-gray-300 px-4 py-2 rounded-lg font-semibold"
         >
-          Buscar
+          <font-awesome-icon :icon="['fas', 'search']" />
         </button>
       </div>
     </section>
 
     <!-- Overview -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md">
-      <h2 class="text-2xl font-semibold mb-4">Overview (Last 30 days)</h2>
+    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Overview (Last 30 days)</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-gray-300">
         <div>
-          <p class="text-sm uppercase">Min Close</p>
-          <p class="text-lg font-medium">{{ stats.min.toFixed(2) }}</p>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Min Close</p>
+          <p class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ stats.min.toFixed(2) }}</p>
         </div>
         <div>
-          <p class="text-sm uppercase">Max Close</p>
-          <p class="text-lg font-medium">{{ stats.max.toFixed(2) }}</p>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Max Close</p>
+          <p class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ stats.max.toFixed(2) }}</p>
         </div>
         <div>
-          <p class="text-sm uppercase">Avg Close</p>
-          <p class="text-lg font-medium">{{ stats.avg.toFixed(2) }}</p>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Avg Close</p>
+          <p class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ stats.avg.toFixed(2) }}</p>
         </div>
         <div class="sm:col-span-3">
-          <p class="text-sm uppercase">Trend</p>
-          <p :class="['text-lg font-medium', trend >= 0 ? 'text-green-400' : 'text-red-400']">
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Trend</p>
+          <p :class="['text-lg font-medium', trend >= 0 ? 'text-green-600' : 'text-red-600']">
             {{ trend >= 0 ? '+' : '' }}{{ trend.toFixed(2) }}%
           </p>
         </div>
@@ -115,8 +117,8 @@
     </section>
 
     <!-- Candlestick Chart -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold mb-4">Candlestick Chart (OHLC + Volume)</h2>
+    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Candlestick Chart (OHLC + Volume)</h2>
       <div class="w-200 h-100">
         <CandleChart v-if="history.length" :history="history" />
         <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
@@ -124,8 +126,8 @@
     </section>
 
     <!-- Close Price Chart -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold mb-4">Close Price Over Time</h2>
+    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Close Price Over Time</h2>
       <div class="w-200 h-100">
         <HistoryChart v-if="labels.length" :labels="labels" :data="closeData" />
         <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
@@ -133,8 +135,8 @@
     </section>
 
     <!-- Volatility Chart -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold mb-4">Volatility (%)</h2>
+     <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Volatility (%)</h2>
       <div class="w-200 h-100">
         <HistoryChart
           v-if="riskReward.labels.length"
@@ -146,8 +148,8 @@
     </section>
 
     <!-- Potential Chart -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold mb-4">Potential (%)</h2>
+    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Potential (%)</h2>
       <div class="w-200 h-100">
         <HistoryChart
           v-if="riskReward.labels.length"
@@ -159,8 +161,8 @@
     </section>
 
     <!-- Risk vs Reward -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold mb-4">Risk vs Reward</h2>
+    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Risk vs Reward</h2>
       <div class="w-200 h-100">
         <ScatterChart
           v-if="riskReward.labels.length"
@@ -172,13 +174,13 @@
     </section>
 
     <!-- Rating Distribution: Bar Chart -->
-    <section class="bg-gray-800 rounded-lg p-6 shadow-md flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold mb-4">Rating Distribution</h2>
+    <!--section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Rating Distribution</h2>
       <div class="w-200 h-100">
         <RatingChart v-if="Object.keys(ratingDistribution).length" :distribution="ratingDistribution" type="bar" />
         <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
       </div>
-    </section>
+    </section-->
   </div>
 </template>
 
@@ -189,9 +191,11 @@ import { useStockStore } from '../stores/stocks'
 import CandleChart from '../components/CandleChart.vue'
 import HistoryChart from '../components/HistoryChart.vue'
 import ScatterChart from '../components/ScatterChart.vue'
-import RatingChart from '../components/RatingChart.vue'
+//import RatingChart from '../components/RatingChart.vue'
 import type { HistoricalPoint, HistoryFilters } from '../stores/stocks'
 import BackButton from '../components/BackButton.vue'
+import TopButton from '../components/TopButton.vue'
+import HomeButton from '../components/HomeButton.vue'
 
 const route = useRoute()
 const ticker = route.params.ticker as string
@@ -221,7 +225,7 @@ const filters = reactive<HistoryFilters>({
 const stock = computed(() => detail.value?.stock)
 const history = computed<HistoricalPoint[]>(() => detail.value?.history ?? [])
 const riskReward = computed(() => detail.value?.riskReward ?? { labels: [], volatilities: [], potentials: [] })
-const ratingDistribution = computed(() => detail.value?.ratingDistribution ?? {})
+//const ratingDistribution = computed(() => detail.value?.ratingDistribution ?? {})
 
 // Computed properties con typing explicito para evitar 'any'
 const labels = computed<string[]>(() => history.value.map((h: HistoricalPoint) => h.Date.slice(0, 10)))

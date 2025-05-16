@@ -54,8 +54,12 @@ onMounted(() => {
             unit: 'day',         // unidad diaria
             tooltipFormat: 'DD LLL yyyy HH:mm' // formato en tooltip
           },
+          ticks:  { color: 'rgb(16, 24, 40)' }
+
         },
-        y: { title: { display: true, text: 'Price' } }
+        y: { title: { display: true, text: 'Price', color: 'rgb(16, 24, 40)' }, 
+          ticks:  { color: 'rgb(16, 24, 40)' }
+       }
       }
     }
   })

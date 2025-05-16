@@ -33,8 +33,24 @@ onMounted(() => {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: { display: true, title: { display: true, text: 'Date' } },
-        y: { display: true, title: { display: true, text: 'Price' } }
+        x: { 
+          display: true, 
+          title: { 
+            display: false, 
+            text: 'Date',
+            color: 'rgb(16, 24, 40)',
+          },
+          ticks:  { color: 'rgb(16, 24, 40)' }
+        },
+        y: { 
+          display: true, 
+          title: { 
+            display: true, 
+            text: 'Price',
+            color: 'rgb(16, 24, 40)'
+          },
+          ticks:  { color: 'rgb(16, 24, 40)' }
+        }
       }
     }
   })

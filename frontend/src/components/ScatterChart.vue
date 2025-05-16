@@ -24,8 +24,8 @@ onMounted(() => {
     data: { datasets: [{ label: 'Risk vs Reward', data: pts }] },
     options: {
       scales: {
-        x: { title: { display: true, text: 'Potential (%)' } },
-        y: { title: { display: true, text: 'Volatility (%)' } }
+        x: { title: { display: true, text: 'Potential (%)', color: 'rgb(16, 24, 40)' }, ticks:  { color: 'rgb(16, 24, 40)' } },
+        y: { title: { display: true, text: 'Volatility (%)', color: 'rgb(16, 24, 40)' }, ticks:  { color: 'rgb(16, 24, 40)' } }
       }
     }
   })
