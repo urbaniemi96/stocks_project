@@ -1,16 +1,12 @@
 <template>
   <BackButton />
-  <div class="p-4">
+  <TopButton />
+  <HomeButton />
+  <div class="container mx-auto p-4">
     <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold mb-4">Top 20 Recommendations</h1>
+    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-4">Top 20 Recommendations</h1>
     <div v-if="isAdmin" class="flex items-center space-x-4">
-        <span class="text-sm text-gray-500">Última actualización: {{ lastUpdated }}</span>
-        <button
-          class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-          @click=""
-        >
-          Recalcular
-        </button>
+        <span class="text-sm text-gray-600 dark:text-gray-400">Última actualización: {{ lastUpdated }}</span>
       </div>
     </div>
     <p class="mb-4 text-gray-700">
@@ -23,14 +19,37 @@
         v-for="(rec, index) in recommendations"
         :key="rec.Ticker"
         :class="[
-          'p-4 mb-2 rounded shadow flex justify-between items-center',
-          index < 5 ? 'bg-green-100' : 'bg-white'
-        ]"
+          'p-4 mb-2 rounded-lg shadow flex justify-between items-center',
+          index < 5
+            ? 'bg-green-100 dark:bg-green-900/20'
+            : 'bg-white dark:bg-gray-700'
+         ]"
       >
+        <font-awesome-icon
+          v-if="index < 3"
+          :icon="['fas', 'trophy']"
+          class="text-2xl"
+          :class="{
+            'text-yellow-500': index === 0,
+            'text-gray-500': index === 1,
+            'text-yellow-700': index === 2
+          }"
+        />
+        <font-awesome-icon
+          v-else 
+          :icon="['fas', 'award']"
+          class="text-2xl"
+          :class="{
+            'text-zinc-800': index == 3,
+            'text-zinc-500': index == 4,
+            'text-zinc-400': index >= 5,
+            }"
+        />
         <div>
           <p class="font-semibold text-lg text-gray-900">
             {{ index + 1 }}. {{ rec.Ticker }}
           </p>
+
           <p class="text-sm text-gray-600">Score: {{ rec.Score.toFixed(4) }}</p>
         </div>
         <button class="px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"
@@ -49,6 +68,8 @@ import { useAuthStore } from '../stores/auth'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import BackButton from '../components/BackButton.vue'
+import TopButton from '../components/TopButton.vue'
+import HomeButton from '../components/HomeButton.vue'
 
 
 const router = useRouter()

@@ -1,102 +1,82 @@
+
+
 <template>
-  <div class="p-8 space-y-6">
-    <h1 class="text-2xl font-bold">Stock Dashboard</h1>
-    <div class="space-x-2">
-      <button @click="refreshAll" class="px-4 py-2 bg-blue-600 text-white rounded">Traer de la API y cargar en la BD</button>
-      <button @click="enrichAll" class="px-4 py-2 bg-blue-600 text-white rounded">Enriquecer desde Yahoo (puede demorar horas)</button>
-      <button @click="showRecommendations" class="px-4 py-2 bg-green-600 text-white rounded">Mostrar Recomendaciones</button>
-      <button @click="recalcRecommendations" class="px-4 py-2 bg-green-600 text-white rounded">Recalcular Reecomendaciones</button>
-      <div v-if="taskId">
-        Progreso: {{ status.pages_fetched }} páginas<br/>
-        Estado: {{ status.status }}
+  <div class="p-8">
+    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-10">Menú</h1>
+
+    <div class="flex flex-col items-center space-y-6">
+      <div class="flex space-x-4 justify-center">
+        <button style="background-color: #DB162F;" class="tool-button w-66 h-54 flex flex-col items-center justify-center" @click="goDash">
+          <font-awesome-icon :icon="['fas', 'money-bills']" class="text-4xl mb-2"/>
+          Dashboard
+        </button>
+        <button style="background-color: #59544B;" class="tool-button w-66 h-54 flex flex-col items-center justify-center" @click="goRecommend">
+          <font-awesome-icon :icon="['fas', 'money-bill-trend-up']" class="text-4xl mb-2"/>
+          Recomendaciones
+        </button>
+      </div>
+
+      <div v-if="auth.isAdmin" class="flex justify-center">
+        <button class="tool-button w-136 h-22 flex items-center justify-center space-x-2" @click="goConfig">
+          <font-awesome-icon :icon="['fas', 'gear']" class="text-4xl"/>
+          &nbsp;&nbsp;Panel Administración
+        </button>
       </div>
     </div>
-
-    <table ref="stocksTable" class="min-w-full bg-white text-gray-800 text-sm">
-      <thead>
-        <tr class="bg-gray-200 font-semibold">
-          <th>Ticker</th>
-          <th>Company</th>
-          <th>From</th>
-          <th>To</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
   </div>
 </template>
 
-<script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
-import $ from 'jquery'
-import 'datatables.net'
-import { useStockStore } from '../stores/stocks'
-import { storeToRefs } from 'pinia'
+
+<script lang="ts" setup>
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+
+const auth = useAuthStore()
 
 const router = useRouter()
-
-const store = useStockStore()
-const { taskId, status } = storeToRefs(store)
-
-const stocksTable = ref<HTMLTableElement>()
-let dataTable: any = null
-
-async function refreshAll() {
-  await store.fetchAndStore()
+function goDash() {
+  router.push('/stocks')
 }
 
-async function enrichAll() {
-  await store.fetchAndEnrich()
+function goRecommend() {
+  router.push('/recommendations')
 }
 
-async function showRecommendations() {
-  router.push({ name: 'Recommendations' }) 
+function goConfig() {
+  router.push('/configuration')
 }
-
-async function recalcRecommendations() {
-  await store.triggerRecalculate()
-}
-
-onMounted(() => {
-  dataTable = $(stocksTable.value!).DataTable({
-    processing: true,
-    serverSide: true,
-    ajax: { url: 'http://localhost:8080/stocks', type: 'GET' },
-    columns: [
-      { data: 'ticker' },
-      { data: 'company' },
-      { data: 'target_from' },
-      { data: 'target_to' },
-      {
-        data: null,
-        orderable: false,
-        searchable: false,
-        defaultContent: `
-          <button class="view-detail px-2 py-1 bg-indigo-600 text-white rounded">
-            Ver detalle
-          </button>
-        `
-      }
-    ],
-    order: [[0, 'asc']],
-    pageLength: 10,
-    lengthMenu: [[10, 20, 50], [10, 20, 50]],
-  })
-  // 2. Delegar el clic del botón para redirigir vía Vue Router
-  $(stocksTable.value!).on('click', 'button.view-detail', function() {
-    const rowData = dataTable.row($(this).closest('tr')).data()
-    router.push({ name: 'stock-detail', params: { ticker: rowData.ticker } })
-  })
-
-
-})
-
-
-onBeforeUnmount(() => {
-  if (dataTable) dataTable.destroy(true)
-})
 </script>
 
-<style scoped>
+<style>
+.tool-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 15px 25px;
+  font-size: 20px;
+  font-weight: bold;
+  background-color: #4f46e5; /* indigo-600 */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s, filter 0.3s;
+}
+
+.tool-button:hover {
+  filter: brightness(1.12);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 30px rgba(0, 0, 0, 0.4);
+}
+
+.tool-button:active {
+  filter: brightness(0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+}
+
+.tool-button:focus {
+  outline: none;
+}
 </style>

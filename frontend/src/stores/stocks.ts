@@ -76,7 +76,6 @@ export const useStockStore = defineStore('stocks', {
         this.status = st.data
         if (this.status.status !== 'in-progress') {
           clearInterval(interval)
-          alert(`Descarga ${this.status.status}`)
         }
       }, 2000)
     },
@@ -86,14 +85,13 @@ export const useStockStore = defineStore('stocks', {
       this.taskId = res.data.task_id
 
       // Empiezo a pollear cada 3seg hasta que status == "done" o "error"
-      /*const interval = setInterval(async () => {
+      const interval = setInterval(async () => {
         const st = await api.get(`/admin/task/${this.taskId}`)
         this.status = st.data
         if (this.status.status !== 'in-progress') {
           clearInterval(interval)
-          alert(`Enrich ${this.status.status}`)
         }
-      }, 3000)*/
+      }, 3000)
     },
     // Traigo los stocks guardados en la bd y los guardo en list (estado del store)
     async loadStocks() {
