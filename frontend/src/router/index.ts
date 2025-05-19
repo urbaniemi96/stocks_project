@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import type { RouterScrollBehavior } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import AdminView from '../views/AdminView.vue'
 import StockView from '../views/StockDashboard.vue'
@@ -34,9 +35,20 @@ const routes: RouteRecordRaw[] = [
     component: RecommendationsView },
 ]
 
+// Para reiniciar el scroll al cambiar de página
+const scrollBehavior: RouterScrollBehavior = (to, from, savedPosition) => {
+  // Si venimos con "historial" (back/forward) volvemos a la posición guardada
+  if (savedPosition) {
+    return savedPosition
+  }
+  // si no volvemos al top
+  return { top: 0 }
+}
+
 export const router = createRouter({
   history: createWebHistory(), // usa el API History de HTML5
   routes,
+  scrollBehavior
 })
 
 // Analizo rol de las rutas
