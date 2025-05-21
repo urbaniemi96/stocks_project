@@ -1,5 +1,21 @@
 <template>
-  <div class="container mx-auto p-8 space-y-10">
+  <BackButton />
+  <TopButton />
+  <HomeButton />
+
+  <!-- Si no hay stock, muestro mensaje de error -->
+  <div
+    v-if="!stock && fetched"
+    class="container mx-auto p-4 text-center text-xl text-red-600 dark:text-red-400"
+  >
+    Ticker inexistente
+  </div>
+
+  <!-- Si no hay detalle, solo muestro cabecera -->
+  <div
+    v-else-if="stock && !detailLoaded"
+    class="container mx-auto p-4 space-y-5"
+  >
     <header class="flex flex-col lg:flex-row lg:justify-between items-start lg:items-center gap-4">
       <div>
         <h1 class="text-4xl font-extrabold text-gray-900 dark:text-gray-100">{{ stock?.ticker }}</h1>
@@ -14,22 +30,54 @@
         </div>
       </div>
     </header>
-    <BackButton />
-    <TopButton />
-    <HomeButton />
+
+    <!-- Overview -->
+    <section class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg space-y-4">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Resumen</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-300">
+        <!-- Targets -->
+        <div>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Target Range</p>
+          <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
+            {{ stock.target_from.toFixed(2) }} – {{ stock.target_to.toFixed(2) }}
+          </p>
+        </div>
+        <!-- Rating -->
+        <div>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Rating</p>
+          <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
+            {{ stock.rating_from }} → {{ stock.rating_to }}
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mensaje de ausencia de detalle -->
+    <div class="pt-15 font-bold text-center text-gray-600 dark:text-gray-400 italic">
+      No hay datos de histórico o métricas para mostrar.
+    </div>
+  </div>
+
+  <!-- Si hay stock y detalle, lo muestro una vez traído -->
+  <div v-else-if="stock" class="container mx-auto p-4 space-y-5">
+    <header class="flex flex-col lg:flex-row lg:justify-between items-start lg:items-center gap-4">
+      <div>
+        <h1 class="text-4xl font-extrabold text-gray-900 dark:text-gray-100">{{ stock?.ticker }}</h1>
+        <p class="mt-2 text-lg font-bold text-gray-600 dark:text-gray-300">{{ stock?.company }}</p>
+      </div>
+      <div class="flex gap-4">
+        <div class="bg-indigo-600 text-white dark:text-gray-300 px-4 py-2 rounded-md font-semibold">
+          {{ stock?.action }}
+        </div>
+        <div class="text-gray-700 dark:text-gray-300 self-center">
+          Broker: {{ stock?.brokerage }}
+        </div>
+      </div>
+    </header>
     <!-- Filtros -->
-    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4">
+    <section class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg space-y-4">
       <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Filtros</h2>
       <div class="flex items-end justify-center gap-4 text-gray-700 dark:text-gray-300">
-        <!--div>
-          <label class="block text-sm">Días</label>
-          <input
-            type="number"
-            min="1"
-            v-model.number="filters.days"
-            class="w-full mt-1 p-2 bg-gray-700 rounded"
-          />
-        </div-->
         <div>
           <label class="block text-m">Fecha inicio</label>
           <input
@@ -46,42 +94,6 @@
             class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-center"
           />
         </div>
-        <!--div>
-          <label class="block text-sm">Orden</label>
-          <select
-            v-model="filters.order"
-            class="w-full mt-1 p-2 bg-gray-700 rounded"
-          >
-            <option value="asc">Ascendente</option>
-            <option value="desc">Descendente</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm">Precio mínimo</label>
-          <input
-            type="number"
-            step="0.01"
-            v-model.number="filters.min_price"
-            class="w-full mt-1 p-2 bg-gray-700 rounded"
-          />
-        </div>
-        <div>
-          <label class="block text-sm">Precio máximo</label>
-          <input
-            type="number"
-            step="0.01"
-            v-model.number="filters.max_price"
-            class="w-full mt-1 p-2 bg-gray-700 rounded"
-          />
-        </div>
-        <div>
-          <label class="block text-sm">Volumen mínimo</label>
-          <input
-            type="number"
-            v-model.number="filters.min_volume"
-            class="w-full mt-1 p-2 bg-gray-700 rounded"
-          />
-        </div-->
         <button
           @click="applyFilters"
           class="mt-4 bg-blue-600 hover:bg-blue-500 text-white dark:text-gray-300 px-4 py-2 rounded-lg font-semibold"
@@ -92,51 +104,74 @@
     </section>
 
     <!-- Overview -->
-    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4">
-      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Overview (Last 30 days)</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-gray-300">
+    <section class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg space-y-4">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Resumen</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 text-gray-300">
+        <!-- Min y Max juntos -->
         <div>
-          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Min Close</p>
-          <p class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ stats.min.toFixed(2) }}</p>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">
+            Min / Max Close
+          </p>
+          <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
+            {{ stats.min.toFixed(2) }} / {{ stats.max.toFixed(2) }}
+          </p>
         </div>
-        <div>
-          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Max Close</p>
-          <p class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ stats.max.toFixed(2) }}</p>
-        </div>
+        <!-- Avg Close -->
         <div>
           <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Avg Close</p>
           <p class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ stats.avg.toFixed(2) }}</p>
         </div>
-        <div class="sm:col-span-3">
+        
+        <!-- Targets -->
+        <div>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Target Range</p>
+          <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
+            {{ stock.target_from.toFixed(2) }} – {{ stock.target_to.toFixed(2) }}
+          </p>
+        </div>
+        <!-- Rating separado en columnas -->
+        <div>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Rating</p>
+          <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
+            {{ stock.rating_from }} → {{ stock.rating_to }}
+          </p>
+        </div>
+        <!-- Trend -->
+        <div class="sm:col-span-4">
           <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Trend</p>
           <p :class="['text-lg font-medium', trend >= 0 ? 'text-green-600' : 'text-red-600']">
-            {{ trend >= 0 ? '+' : '' }}{{ trend.toFixed(2) }}%
+            <span>
+              {{ trend >= 0 ? '+' : '' }}{{ trend.toFixed(2) }}%
+            </span>
+            <font-awesome-icon
+              :icon="['fas', trend >= 0 ? 'arrow-up' : 'arrow-down']"
+              :class="trend >= 0 ? 'text-green-600' : 'text-red-600'"
+            />
           </p>
         </div>
       </div>
     </section>
 
     <!-- Candlestick Chart -->
-    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Candlestick Chart (OHLC + Volume)</h2>
-      <div class="w-200 h-100">
+    <Accordion title="Candlestick Chart (OHLC + Volume)">
+      <div class="w-200 h-120">
         <CandleChart v-if="history.length" :history="history" />
-        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
+        <div v-else class="flex items-center justify-center h-full text-gray-500">
+          No data available
+        </div>
       </div>
-    </section>
+    </Accordion>
 
     <!-- Close Price Chart -->
-    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Close Price Over Time</h2>
+    <Accordion title="Price Over Time">
       <div class="w-200 h-100">
         <HistoryChart v-if="labels.length" :labels="labels" :data="closeData" />
         <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
       </div>
-    </section>
+    </Accordion>
 
     <!-- Volatility Chart -->
-     <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Volatility (%)</h2>
+    <Accordion title="Volatility (%)">
       <div class="w-200 h-100">
         <HistoryChart
           v-if="riskReward.labels.length"
@@ -145,11 +180,10 @@
         />
         <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
       </div>
-    </section>
+    </Accordion>
 
     <!-- Potential Chart -->
-    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Potential (%)</h2>
+    <Accordion title="Potential (%)">
       <div class="w-200 h-100">
         <HistoryChart
           v-if="riskReward.labels.length"
@@ -158,11 +192,10 @@
         />
         <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
       </div>
-    </section>
+    </Accordion>
 
     <!-- Risk vs Reward -->
-    <section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Risk vs Reward</h2>
+    <Accordion title="Risk vs Reward">
       <div class="w-200 h-100">
         <ScatterChart
           v-if="riskReward.labels.length"
@@ -171,37 +204,31 @@
         />
         <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
       </div>
-    </section>
-
-    <!-- Rating Distribution: Bar Chart -->
-    <!--section class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg space-y-4 flex flex-col items-center justify-center">
-      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Rating Distribution</h2>
-      <div class="w-200 h-100">
-        <RatingChart v-if="Object.keys(ratingDistribution).length" :distribution="ratingDistribution" type="bar" />
-        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
-      </div>
-    </section-->
+    </Accordion>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, onMounted } from 'vue'
+import { reactive, computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStockStore } from '../stores/stocks'
 import CandleChart from '../components/CandleChart.vue'
 import HistoryChart from '../components/HistoryChart.vue'
 import ScatterChart from '../components/ScatterChart.vue'
-//import RatingChart from '../components/RatingChart.vue'
 import type { HistoricalPoint, HistoryFilters } from '../stores/stocks'
 import BackButton from '../components/BackButton.vue'
 import TopButton from '../components/TopButton.vue'
 import HomeButton from '../components/HomeButton.vue'
+import Accordion from '../components/Accordion.vue'
 
 const route = useRoute()
 const ticker = route.params.ticker as string
 
 const stocksStore = useStockStore()
 const detail = computed(() => stocksStore.detail)
+
+// Bandera para evitar parpadeo de pantalla al cargar un nuevo stock 
+const fetched = ref(false)
 
 // Calculamos hoy y hace un mes en formato YYYY-MM-DD
 const today = new Date()
@@ -224,8 +251,11 @@ const filters = reactive<HistoryFilters>({
 
 const stock = computed(() => detail.value?.stock)
 const history = computed<HistoricalPoint[]>(() => detail.value?.history ?? [])
+// Para detectar si existe histórico de ese ticker
+const detailLoaded = computed(() => {
+  return Array.isArray(detail?.value?.history) && detail.value.history.length > 0
+})
 const riskReward = computed(() => detail.value?.riskReward ?? { labels: [], volatilities: [], potentials: [] })
-//const ratingDistribution = computed(() => detail.value?.ratingDistribution ?? {})
 
 // Computed properties con typing explicito para evitar 'any'
 const labels = computed<string[]>(() => history.value.map((h: HistoricalPoint) => h.Date.slice(0, 10)))
@@ -255,16 +285,13 @@ async function applyFilters() {
     await stocksStore.loadDetail(ticker, { ...filters })
   } catch (err) {
     console.error('Error al aplicar filtros:', err)
+  } finally {
+    fetched.value = true   // Actualizo flag para mostrar datos
   }
 }
 
 onMounted(async () => {
   applyFilters()
-  /*try {
-    await stocksStore.loadDetail(ticker, days)  // Llamado centralizado al store
-  } catch (err) {
-    console.error('Error loading stock detail:', err)
-  }*/
 })
 </script>
 

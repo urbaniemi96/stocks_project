@@ -1,10 +1,10 @@
 <template>
+  <BackButton />
+  <TopButton />
+  <HomeButton />
   <div class="p-8">
     <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-10">Configuración</h1>
     
-    <BackButton />
-    <TopButton />
-    <HomeButton />
     <div class="flex flex-col items-center space-y-7">
         <button class="tool-button w-136 h-22 flex items-center justify-center space-x-2" @click="refreshAll">
             <font-awesome-icon :icon="['fas', 'cloud-download-alt']" class="text-4xl"/>

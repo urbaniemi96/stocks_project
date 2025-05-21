@@ -1,9 +1,9 @@
 <template>
-  <div class="container mx-auto p-8 space-y-6">
+  <BackButton />
+  <TopButton />
+  <HomeButton />
+  <div class="container mx-auto p-4 space-y-6">
     <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100">Stock Dashboard</h1>
-    <BackButton />
-    <TopButton />
-    <HomeButton />
     <table ref="stocksTable" class="min-w-full bg-white dark:bg-gray-800 dark:text-gray-200 text-sm divide-y">
       <thead>
         <tr class="bg-gray-200 font-semibold">
