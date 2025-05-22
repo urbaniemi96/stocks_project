@@ -8,7 +8,7 @@ import (
 type TaskInfo struct {
 	Status       string `json:"status"`        // "in-progress" / "done" / "error"
 	PagesFetched int    `json:"pages_fetched"` // cantidad de pag procesadas
-	Error        string `json:"error,omitempty"`
+	Error        string `json:"error"`
 }
 
 var (

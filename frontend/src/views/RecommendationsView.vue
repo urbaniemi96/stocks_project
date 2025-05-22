@@ -4,7 +4,7 @@
   <HomeButton />
   <div class="container mx-auto p-4 space-y-6">
     <div class="flex justify-between items-center mb-4">
-    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-4">Top 20 Recommendations</h1>
+    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-4">Top 20 Recomendaciones</h1>
     <div v-if="isAdmin" class="flex items-center space-x-4">
         <span class="text-sm text-gray-600 dark:text-gray-400">Última actualización: {{ lastUpdated }}</span>
       </div>

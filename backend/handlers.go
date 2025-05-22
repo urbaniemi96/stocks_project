@@ -39,7 +39,7 @@ func StartFetchHandler(c *gin.Context) {
 	// Genero ID único de tarea
 	id := uuid.New().String()
 	// Inicializo estructura de tarea en progreso
-	info := &TaskInfo{Status: "in-progress", PagesFetched: 0}
+	info := &TaskInfo{Status: "in-progress", PagesFetched: 0, Error: ""}
 
 	// Hago lock del mutex del mapa de tareas
 	tasksMu.Lock()
@@ -70,8 +70,6 @@ func StartFetchHandler(c *gin.Context) {
 				tasksMu.Unlock()
 				return
 			}
-			// Convierto los items traidos de la página a estructura Stock
-			//stocks := convertItemsToStocks(r.Items)
 			// Guardo los stocks en la BD
 			if err := saveStocks(stocks); err != nil {
 				// Marco en caso de error
@@ -227,7 +225,7 @@ func StartEnrichHandler(c *gin.Context) {
 	// Genero un ID único para la tarea
 	taskID := uuid.New().String()
 	// Inicializo estructura de tarea en progreso
-	info := &TaskInfo{Status: "in-progress", PagesFetched: 0}
+	info := &TaskInfo{Status: "in-progress", PagesFetched: 0, Error: ""}
 
 	// Hago lock del mutex del mapa de tareas
 	tasksMu.Lock()

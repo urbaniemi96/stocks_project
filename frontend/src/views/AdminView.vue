@@ -12,15 +12,67 @@
         </button>
         <button class="tool-button w-136 h-22 flex items-center justify-center space-x-2" @click="enrichAll">
             <font-awesome-icon :icon="['fas', 'chart-line']" class="text-4xl"/>
-            &nbsp;&nbsp;Enriquecer datos (puede demorar horas)
+            &nbsp;&nbsp;Enriquecer datos (últimos 3 meses)
         </button>
         <button class="tool-button w-136 h-22 flex items-center justify-center space-x-2" @click="recalcRecommendations">
             <font-awesome-icon :icon="['fas', 'sync']" class="text-4xl"/>
             &nbsp;&nbsp;Recalcular Reecomendaciones
         </button>
-        <div v-if="taskId">
-            Progreso: {{ status.pages_fetched }} páginas<br/>
-            Estado: {{ status.status }}
+        <!-- Información de la tarea -->
+        <div v-if="taskId" class="flex flex-col max-w-md mx-auto p-6 bg-white rounded-2xl shadow-lg">
+          <h2 class="text-xl font-semibold mb-3 whitespace-nowrap overflow-hidden truncate">Tarea {{ taskId }}</h2>
+
+          <!-- Indicador indeterminado -->
+          <div class="relative w-full h-3 mb-4 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              v-if="status.status === 'in-progress'"
+              class="absolute inset-0 bg-indigo-600 opacity-75 animate-pulse"
+            ></div>
+          </div>
+          <p class="text-sm text-gray-600 mb-2">
+            Páginas obtenidas: <span class="font-medium">{{ status.pages_fetched }}</span>
+          </p>
+
+          <!-- Estado con badges -->
+          <div class="flex self-center items-center">
+            <span
+              class="inline-block px-3 py-1 rounded-full text-xs font-medium"
+              :class="{
+                'bg-yellow-100 text-yellow-800': status.status === 'in-progress',
+                'bg-green-100 text-green-800': status.status === 'done',
+                'bg-red-100 text-red-800': status.status === 'error'
+              }"
+            >
+              {{ status.status.replace('-', ' ').toUpperCase() }}
+            </span>
+            <p
+              v-if="status.status === 'error' && status.error"
+              class="ml-3 text-sm text-red-600"
+            >
+              {{ status.error }}
+            </p>
+            <svg
+              v-if="status.status === 'in-progress'"
+              class="ml-2 w-4 h-4 animate-spin text-blue-500"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8H4z"
+              />
+            </svg>
+          </div>
         </div>
     </div>
 
@@ -53,7 +105,7 @@ async function recalcRecommendations() {
 </script>
 
 <style>
-    .tool-button {
+  .tool-button {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -67,21 +119,21 @@ async function recalcRecommendations() {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
     cursor: pointer;
     transition: transform 0.3s, box-shadow 0.3s, filter 0.3s;
-    }
+  }
 
-    .tool-button:hover {
+  .tool-button:hover {
     filter: brightness(1.12);
     transform: translateY(-5px);
     box-shadow: 0 20px 30px rgba(0, 0, 0, 0.4);
-    }
+  }
 
-    .tool-button:active {
+  .tool-button:active {
     filter: brightness(0.95);
     transform: translateY(-2px);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
-    }
+  }
 
-    .tool-button:focus {
+  .tool-button:focus {
     outline: none;
-    }
+  }
 </style>

@@ -58,7 +58,7 @@ export const useStockStore = defineStore('stocks', {
   state: () => ({
     list: [] as Stock[],
     taskId: null as string | null,
-    status: { status: '', pages_fetched: 0 },
+    status: { status: '', pages_fetched: 0, error: '' },
     detail: null as StockDetailResponse | null,
     recommendations: [] as Recommendation[],
   }),

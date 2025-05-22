@@ -37,14 +37,14 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-300">
         <!-- Targets -->
         <div>
-          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Target Range</p>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Rango objetivo</p>
           <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
             {{ stock.target_from.toFixed(2) }} – {{ stock.target_to.toFixed(2) }}
           </p>
         </div>
         <!-- Rating -->
         <div>
-          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Rating</p>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Calificación</p>
           <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
             {{ stock.rating_from }} → {{ stock.rating_to }}
           </p>
@@ -110,7 +110,7 @@
         <!-- Min y Max juntos -->
         <div>
           <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">
-            Min / Max Close
+            Cierre Mín / Máx
           </p>
           <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
             {{ stats.min.toFixed(2) }} / {{ stats.max.toFixed(2) }}
@@ -118,27 +118,27 @@
         </div>
         <!-- Avg Close -->
         <div>
-          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Avg Close</p>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Promedio Cierre</p>
           <p class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ stats.avg.toFixed(2) }}</p>
         </div>
         
         <!-- Targets -->
         <div>
-          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Target Range</p>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Rango objetivo</p>
           <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
             {{ stock.target_from.toFixed(2) }} – {{ stock.target_to.toFixed(2) }}
           </p>
         </div>
         <!-- Rating separado en columnas -->
         <div>
-          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Rating</p>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Calificación</p>
           <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
             {{ stock.rating_from }} → {{ stock.rating_to }}
           </p>
         </div>
         <!-- Trend -->
         <div class="sm:col-span-4">
-          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Trend</p>
+          <p class="text-m uppercase font-semibold text-gray-900 dark:text-gray-100">Tendencia</p>
           <p :class="['text-lg font-medium', trend >= 0 ? 'text-green-600' : 'text-red-600']">
             <span>
               {{ trend >= 0 ? '+' : '' }}{{ trend.toFixed(2) }}%
@@ -153,56 +153,56 @@
     </section>
 
     <!-- Candlestick Chart -->
-    <Accordion title="Candlestick Chart (OHLC + Volume)">
+    <Accordion title="Gráfico de velas (OHLC + Volumen)">
       <div class="w-200 h-120">
         <CandleChart v-if="history.length" :history="history" />
         <div v-else class="flex items-center justify-center h-full text-gray-500">
-          No data available
+          No hay datos disponibles
         </div>
       </div>
     </Accordion>
 
     <!-- Close Price Chart -->
-    <Accordion title="Price Over Time">
+    <Accordion title="Precio a lo largo del tiempo">
       <div class="w-200 h-100">
         <HistoryChart v-if="labels.length" :labels="labels" :data="closeData" />
-        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No hay datos disponibles</div>
       </div>
     </Accordion>
 
     <!-- Volatility Chart -->
-    <Accordion title="Volatility (%)">
+    <Accordion title="Volatilidad (%)">
       <div class="w-200 h-100">
         <HistoryChart
           v-if="riskReward.labels.length"
           :labels="riskReward.labels"
           :data="riskReward.volatilities"
         />
-        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No hay datos disponibles</div>
       </div>
     </Accordion>
 
     <!-- Potential Chart -->
-    <Accordion title="Potential (%)">
+    <Accordion title="Potencial (%)">
       <div class="w-200 h-100">
         <HistoryChart
           v-if="riskReward.labels.length"
           :labels="riskReward.labels"
           :data="riskReward.potentials"
         />
-        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No hay datos disponibles</div>
       </div>
     </Accordion>
 
     <!-- Risk vs Reward -->
-    <Accordion title="Risk vs Reward">
+    <Accordion title="Riesgo vs Recompensa">
       <div class="w-200 h-100">
         <ScatterChart
           v-if="riskReward.labels.length"
           :potentials="riskReward.potentials"
           :volatilities="riskReward.volatilities"
         />
-        <div v-else class="flex items-center justify-center h-full text-gray-500">No data available</div>
+        <div v-else class="flex items-center justify-center h-full text-gray-500">No hay datos disponibles</div>
       </div>
     </Accordion>
   </div>

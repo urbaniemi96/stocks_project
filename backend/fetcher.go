@@ -42,36 +42,52 @@ func fetchPage(nextPage string) ([]Stock, string, error) {
 	url := getAPIURL()
 	key := getAPIKEY()
 	// Creo cliente http para mandar peticiones (podría usar http.Get() también)
-	//
-	// REVISAR: poner timeouts para la petición?
-	//
 	client := &http.Client{}
 	if nextPage != "" {
 		url += "?next_page=" + nextPage
 	}
 	// Armo la solicitud (cuerpo null porque no envío nada)
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("new request: %w", err)
+	}
 	// Agrego header de autenticación (Bearer es un tipo de autenticación HTTP)
 	req.Header.Add("Authorization", "Bearer "+key)
 	// Envío petición
 	resp, err := client.Do(req)
 	if err != nil {
-		return all, "", err
+		return all, "", fmt.Errorf("http request: %w", err)
 	}
 	// Cierro el stream de datos del cuerpo (lo hago con defer para asegurarme que se ejecute al final)
 	defer resp.Body.Close()
 	// Leo el body de la respuesta
-	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, "", fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return all, "", fmt.Errorf("read body: %w", err)
+	}
 	// Convierto el JSON del body en estructura de Go y lo guardo en r
 	if err := json.Unmarshal(body, &r); err != nil {
-		return all, "", err
+		return all, "", fmt.Errorf("unmarshal JSON: %w", err)
 	}
 	// Recorro los r.items de la respuesta (ignoro el índice)
 	for _, it := range r.Items {
-		fFrom, _ := parseDollar(it.TargetFrom)
-		fTo, _ := parseDollar(it.TargetTo)
+		fFrom, err := parseDollar(it.TargetFrom)
+		if err != nil {
+        return all, "", fmt.Errorf("parse TargetFrom %q: %w", it.TargetFrom, err)
+    }
+		fTo, err := parseDollar(it.TargetTo)
+		if err != nil {
+        return all, "", fmt.Errorf("parse TargetTo %q: %w", it.TargetTo, err)
+    }
 		// Convierto el string time devuelto por la api (RFC3339 con nanosegundos) en un objeto time de go
-		t, _ := time.Parse(time.RFC3339Nano, it.Time)
+		t, err := time.Parse(time.RFC3339Nano, it.Time)
+		if err != nil {
+			return all, "", fmt.Errorf("parse time %q: %w", it.Time, err)
+    }
 		// Agrego al array de Stock los datos traídos
 		all = append(all, Stock{
 			Ticker:     it.Ticker,
@@ -89,11 +105,11 @@ func fetchPage(nextPage string) ([]Stock, string, error) {
 }
 
 // fetchHistory llama a Yahoo Finance para un ticker,
-// trayendo datos de los últimos 30 días con intervalo diario.
+// trayendo datos de los últimos 90 días con intervalo diario.
 func fetchHistory(ticker string) ([]HistoricalPoint, error) {
 	//API de datos
 	url := fmt.Sprintf(
-		"https://query1.finance.yahoo.com/v8/finance/chart/%s?range=1mo&interval=1d",
+		"https://query1.finance.yahoo.com/v8/finance/chart/%s?range=3mo&interval=1d",
 		ticker,
 	)
 
@@ -140,7 +156,7 @@ func fetchHistory(ticker string) ([]HistoricalPoint, error) {
 			resp.StatusCode, ticker, string(body))
 	}
 
-	// Si no devuelve nada
+	// Si no devuelve nada, se avisa
 	if resp == nil {
 		return nil, fmt.Errorf("no se obtuvo JSON válido para %s tras %d intentos", ticker, maxRetries)
 	}
@@ -208,23 +224,23 @@ func fetchHistory(ticker string) ([]HistoricalPoint, error) {
 // llama a fetchHistory con throttle de 1 cada 2s,
 // guarda en price_histories, y continúa ante errores.
 func fetchAllHistories(taskID string) error {
-	// 1) Cargar todos los tickers
+	//Traigo los stocks
 	var stocks []Stock
 	if err := db.Find(&stocks).Error; err != nil {
 		log.Fatalf("no pude leer tickers: %v", err)
 		return err
 	}
 
-	// 2) Recorrer uno a uno
+	// Recorro tickers
 	for i, s := range stocks {
-		// 3) Llamar a la API
+		// Traigo históricos
 		points, err := fetchHistory(s.Ticker)
 		if err != nil {
 			log.Printf("ERROR al obtener datos para %s: %v", s.Ticker, err)
 			time.Sleep(2 * time.Second)
 			continue
 		} else {
-			// 4) Guardar en transacción
+			// Guardo en db
 			for _, pt := range points {
 				if err := db.Clauses(
 					// Upsert
@@ -244,7 +260,7 @@ func fetchAllHistories(taskID string) error {
 		tasksMu.Lock()
 		tasks[taskID].PagesFetched = i + 1
 		tasksMu.Unlock()
-		// 5) Esperar 2 segundos antes de la siguiente petición
+		// Espero 2 segundos antes de la siguiente petición
 		time.Sleep(2 * time.Second)
 	}
 
@@ -254,5 +270,14 @@ func fetchAllHistories(taskID string) error {
 
 // Convierto valores del tipo "$4.60" en 4.60
 func parseDollar(s string) (float64, error) {
-	return strconv.ParseFloat(strings.Trim(s, "$"), 64)
+	// Saco espacios
+	clean := strings.TrimSpace(s)
+	// Quito $
+	clean = strings.TrimPrefix(clean, "$")
+
+	// Quito separador de miles
+	clean = strings.ReplaceAll(clean, ",", "")
+
+	// Convierto a float64
+	return strconv.ParseFloat(clean, 64)
 }
