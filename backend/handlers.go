@@ -169,48 +169,49 @@ func listStocksHandler(c *gin.Context) {
 	})
 }
 
+// Traigo históricos de un ticker específico
 func StockDetailHandler(c *gin.Context) {
     ticker := c.Param("ticker")
 
-    // 2.1) parseo y validación de filtros
+    // Validación de filtros
     filters, err := parseHistoryFilters(c)
     if err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
 
-    // 2.2) Traer el registro de Stock
+    // Traigo stock de ese ticker
     var stock Stock
     res := db.First(&stock, "ticker = ?", ticker)
-    // Si no encontró ningún registro…
+    // Si no encuentro
     if res.RowsAffected == 0 {
         c.JSON(http.StatusNotFound, gin.H{"error": "stock not found"})
         return
     }
-    // Si hubo un error distinto…
+    // Si hubo otro error
     if res.Error != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": res.Error.Error()})
         return
     }
 
-    // 2.3) Traer histórico con filtros
+    // Traigo el histórico con los filtros (los únicos funcionales los de fechas)
     history, err := getHistory(ticker, filters)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
 
-    // 2.5) Calcular Risk/Reward
+    // Calculo riesgo / recompensa
     rr := calcRiskReward(history)
 
-    // 2.6) Distribución de ratings en todos los stocks
+    // Distribución de ratings
     ratingDist, err := getRatingDistribution()
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
 
-    // 3) Armar y devolver la respuesta
+    // Estructura de la respuesta
     resp := StockDetailResponse{
         Stock:              stock,
         History:            history,
@@ -251,6 +252,7 @@ func StartEnrichHandler(c *gin.Context) {
 	c.JSON(202, gin.H{"task_id": taskID})
 }
 
+// Handler para recalcular las recomendaciones de stocks
 func RecalculateRecommendationsHandler(c *gin.Context) {
 	// Disparo goroutine para recalcular las recomendaciones
     go func() {
@@ -261,6 +263,7 @@ func RecalculateRecommendationsHandler(c *gin.Context) {
     c.JSON(http.StatusAccepted, gin.H{"status": "started"})
 }
 
+// Obtengo el top 20 recomendaciones
 func TopRecommendationsHandler(c *gin.Context) {
     var recs []Recommendation
     if err := db.Order("score DESC").Limit(20).Find(&recs).Error; err != nil {

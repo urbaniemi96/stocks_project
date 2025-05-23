@@ -17,7 +17,7 @@ func main() {
 	// Inyecto "usuario admin"
 	r.Use(middleware.FakeAdmin())
 
-
+	// Solo para desarrollo permito todo
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -42,7 +42,7 @@ func main() {
 	// Muestro el Top 20 recomendaciones
 	r.GET("/recommendations/top20", TopRecommendationsHandler)
 
-	// Rutas del rol “admin” 
+	// Rutas del rol admin”
 	admin := r.Group("/admin")
 	admin.Use(middleware.RequireAdmin())
 	admin.POST("/recalculate", RecalculateRecommendationsHandler) // Recalculo score de recomendación con los datos guardados

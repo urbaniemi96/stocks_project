@@ -7,11 +7,13 @@ import (
 )
 
 func parseHistoryFilters(c *gin.Context) (HistoryFilters, error) {
-    days, _ := strconv.Atoi(c.DefaultQuery("days", "30"))
+	// Cantidad de días a traer (90 por defecto)
+    days, _ := strconv.Atoi(c.DefaultQuery("days", "90"))
 
     var hf HistoryFilters
     hf.Days = days
 
+		// Armo la estructura de filtros históricos
     if sd := c.Query("start_date"); sd != "" {
         t, err := time.Parse("2006-01-02", sd)
         if err != nil {
@@ -26,6 +28,7 @@ func parseHistoryFilters(c *gin.Context) (HistoryFilters, error) {
         }
         hf.EndDate = &t
     }
+		// En desuso por haber quitado los filtros
     if mp := c.Query("min_price"); mp != "" {
         v, err := strconv.ParseFloat(mp, 64)
         if err != nil {
@@ -52,65 +55,65 @@ func parseHistoryFilters(c *gin.Context) (HistoryFilters, error) {
 }
 
 func getHistory(ticker string, f HistoryFilters) ([]HistoricalPoint, error) {
-    q := db.Model(&HistoricalPoint{}).
-        Where("ticker = ?", ticker)
+	// Armo consulta
+	q := db.Model(&HistoricalPoint{}).
+			Where("ticker = ?", ticker)
 
-    if f.StartDate != nil {
-        q = q.Where("date >= ?", f.StartDate)
-    }
-    if f.EndDate != nil {
-        q = q.Where("date <= ?", f.EndDate)
-    }
-    if f.MinPrice != nil {
-        q = q.Where("close >= ?", *f.MinPrice)
-    }
-    if f.MaxPrice != nil {
-        q = q.Where("close <= ?", *f.MaxPrice)
-    }
-    if f.MinVolume != nil {
-        q = q.Where("volume >= ?", *f.MinVolume)
-    }
+	if f.StartDate != nil {
+			q = q.Where("date >= ?", f.StartDate)
+	}
+	if f.EndDate != nil {
+			q = q.Where("date <= ?", f.EndDate)
+	}
+	if f.MinPrice != nil {
+			q = q.Where("close >= ?", *f.MinPrice)
+	}
+	if f.MaxPrice != nil {
+			q = q.Where("close <= ?", *f.MaxPrice)
+	}
+	if f.MinVolume != nil {
+			q = q.Where("volume >= ?", *f.MinVolume)
+	}
 
-    orderDir := "asc"
-    if f.OrderDesc {
-        orderDir = "desc"
-    }
-    q = q.Order("date " + orderDir).
-        Limit(f.Days)
+	orderDir := "asc"
+	if f.OrderDesc {
+			orderDir = "desc"
+	}
+	q = q.Order("date " + orderDir) // .Limit(f.Days) Saco el límite de días (por haber quitado el filtro)
 
-    var pts []HistoricalPoint
-		// Busco los historicos
-    if err := q.Find(&pts).Error; err != nil {
-        return nil, err
-    }
+	var pts []HistoricalPoint
+	// Busco los historicos
+	if err := q.Find(&pts).Error; err != nil {
+			return nil, err
+	}
 
-    // Si pedimos desc, invertimos el slice para devolver asc por JSON
-    if f.OrderDesc {
-        for i, j := 0, len(pts)-1; i < j; i, j = i+1, j-1 {
-            pts[i], pts[j] = pts[j], pts[i]
-        }
-    }
-    return pts, nil
+	// Si pedimos desc, invertimos el slice para devolver asc por JSON
+	if f.OrderDesc {
+			for i, j := 0, len(pts)-1; i < j; i, j = i+1, j-1 {
+					pts[i], pts[j] = pts[j], pts[i]
+			}
+	}
+	return pts, nil
 }
 
 func calcRiskReward(history []HistoricalPoint) RiskRewardData {
-    labels := make([]string, len(history))
-    vols := make([]float64, len(history))
-    pots := make([]float64, len(history))
+	labels := make([]string, len(history))
+	vols := make([]float64, len(history))
+	pots := make([]float64, len(history))
 
-    for i, pt := range history {
-        labels[i] = pt.Date.Format("2006-01-02")
-        vols[i] = (pt.High - pt.Low) / pt.Open * 100
-        pots[i] = (pt.Close - pt.Open) / pt.Open * 100
-    }
-    return RiskRewardData{
-        Labels:       labels,
-        Volatilities: vols,
-        Potentials:   pots,
-    }
+	for i, pt := range history {
+		labels[i] = pt.Date.Format("2006-01-02")
+		vols[i] = (pt.High - pt.Low) / pt.Open * 100
+		pots[i] = (pt.Close - pt.Open) / pt.Open * 100
+	}
+	return RiskRewardData{
+		Labels:       labels,
+		Volatilities: vols,
+		Potentials:   pots,
+	}
 }
 
-// Obtengo los ratings agrupados y contada su cantidad
+// Obtengo los ratings agrupados y contada su cantidad (en desuso)
 func getRatingDistribution() (map[string]int, error) {
     rows, err := db.Model(&Stock{}).
         Select("rating_to, count(*) as cnt").

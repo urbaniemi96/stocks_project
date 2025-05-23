@@ -15,7 +15,7 @@ import (
 
 const (
 	maxRetries     = 10              // cuántas veces reintentar como máximo
-	initialBackoff = 3 * time.Second // backoff inicial
+	initialBackoff = 2 * time.Second // backoff inicial
 )
 
 // Estructura de la respuesta de la API
@@ -260,8 +260,8 @@ func fetchAllHistories(taskID string) error {
 		tasksMu.Lock()
 		tasks[taskID].PagesFetched = i + 1
 		tasksMu.Unlock()
-		// Espero 2 segundos antes de la siguiente petición
-		time.Sleep(2 * time.Second)
+		// Espero 1 segundos antes de la siguiente petición
+		time.Sleep(1 * time.Second)
 	}
 
 	log.Println("Proceso completo de fetchAllHistories")
@@ -274,10 +274,8 @@ func parseDollar(s string) (float64, error) {
 	clean := strings.TrimSpace(s)
 	// Quito $
 	clean = strings.TrimPrefix(clean, "$")
-
 	// Quito separador de miles
 	clean = strings.ReplaceAll(clean, ",", "")
-
 	// Convierto a float64
 	return strconv.ParseFloat(clean, 64)
 }

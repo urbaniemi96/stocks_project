@@ -54,7 +54,7 @@ export interface Recommendation {
 
 // Defino store de pinia
 export const useStockStore = defineStore('stocks', {
-  // Defino estado del store
+  // Defino estado inicial del store
   state: () => ({
     list: [] as Stock[],
     taskId: null as string | null,

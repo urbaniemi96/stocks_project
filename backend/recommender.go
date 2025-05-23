@@ -1,8 +1,3 @@
-// Archivo con algoritmo para recomendar inversion
-//
-// REVISAR Y MEJORAR TODO ESTO (lo dejo para después)
-//
-
 package main
 
 import (
@@ -10,24 +5,25 @@ import (
 "gorm.io/gorm/clause"
 )
 
+// Recalculo el score de los stocks
 func RecalculateRecommendations() error {
-    // 1) Traer todo el histórico almacenado
+    // Traigo el histórico
     var hist []HistoricalPoint
     if err := db.Find(&hist).Error; err != nil {
         return err
     }
 
-    // 2) Agrupar por ticker
+    // Agrupo por ticker
     byTicker := make(map[string][]HistoricalPoint)
     for _, pt := range hist {
         byTicker[pt.Ticker] = append(byTicker[pt.Ticker], pt)
     }
 
-    // 3) Calcular score para cada ticker
+    // Calculo score de cada ticker
     recs := make([]Recommendation, 0, len(byTicker))
     for ticker, series := range byTicker {
 			if len(series) == 0 {
-				// Si no hay datos históricos, saltamos este ticker
+				// Si no hay datos históricos, continúo
 				continue
 			}
 			var sumR, sumV float64
@@ -62,7 +58,7 @@ func RecalculateRecommendations() error {
 			})
     }
 
-    // 4) Upsert masivo
+    // Upsert masivo
     for _, r := range recs {
         db.Clauses(clause.OnConflict{UpdateAll: true}).Create(&r)
     }
