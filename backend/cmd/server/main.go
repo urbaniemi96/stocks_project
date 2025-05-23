@@ -2,7 +2,9 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/urbaniemi96/stocks_proyect/backend/middleware"
+	"github.com/urbaniemi96/stocks_project/backend/db"
+	"github.com/urbaniemi96/stocks_project/backend/handlers"
+	"github.com/urbaniemi96/stocks_project/backend/middleware"
 	"log"
 	//"fmt"
 )
@@ -10,7 +12,7 @@ import (
 // Se ejecuta al hacer el go run
 func main() {
 	// Conecto a la DB
-	initDB()
+	db.InitDB()
 	// Inicializo gin
 	r := gin.Default()
 
@@ -32,24 +34,23 @@ func main() {
 	})
 
 	// Rutas hacia los manejadores
-	
+
 	// Muestro los stocks guardados en la DB
-	r.GET("/stocks", listStocksHandler)    
-	
+	r.GET("/stocks", handlers.ListStocksHandler)
+
 	// Traigo los históricos de un ticker
-	r.GET("/stocks/:ticker/detail", StockDetailHandler)
+	r.GET("/stocks/:ticker/detail", handlers.StockDetailHandler)
 
 	// Muestro el Top 20 recomendaciones
-	r.GET("/recommendations/top20", TopRecommendationsHandler)
+	r.GET("/recommendations/top20", handlers.TopRecommendationsHandler)
 
 	// Rutas del rol admin”
 	admin := r.Group("/admin")
 	admin.Use(middleware.RequireAdmin())
-	admin.POST("/recalculate", RecalculateRecommendationsHandler) // Recalculo score de recomendación con los datos guardados
-	admin.GET("/fetch", StartFetchHandler)     // Traigo datos de la API del desafío y guardo en la DB
-	admin.GET("/enrich", StartEnrichHandler)   // Inicio enriquecimiento de datos con Yahoo Finance
-	admin.GET("/task/:id", FetchStatusHandler) //Consulto el estado de la tarea con :id
-
+	admin.POST("/recalculate", handlers.RecalculateRecommendationsHandler) // Recalculo score de recomendación con los datos guardados
+	admin.GET("/fetch", handlers.StartFetchHandler)                        // Traigo datos de la API del desafío y guardo en la DB
+	admin.GET("/enrich", handlers.StartEnrichHandler)                      // Inicio enriquecimiento de datos con Yahoo Finance
+	admin.GET("/task/:id", handlers.FetchStatusHandler)                    //Consulto el estado de la tarea con :id
 
 	// Arranco el servidor en el puerto 8080
 	if err := r.Run(":8080"); err != nil {

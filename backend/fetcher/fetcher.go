@@ -1,9 +1,13 @@
-package main
+package fetcher
 
 import (
 	//"context"
 	"encoding/json"
 	"fmt"
+	"github.com/urbaniemi96/stocks_project/backend/config"
+	"github.com/urbaniemi96/stocks_project/backend/db"
+	"github.com/urbaniemi96/stocks_project/backend/model"
+	"github.com/urbaniemi96/stocks_project/backend/tasks"
 	"gorm.io/gorm/clause"
 	"io"
 	"log"
@@ -35,12 +39,12 @@ type apiResponse struct {
 }
 
 // Traigo los datos de una página (nextPage) y los transformo en []Stock
-func fetchPage(nextPage string) ([]Stock, string, error) {
+func FetchPage(nextPage string) ([]model.Stock, string, error) {
 	var r apiResponse
 	// Inicio array de estructuras tipo Stock (definidas en model.go)
-	var all []Stock
-	url := getAPIURL()
-	key := getAPIKEY()
+	var all []model.Stock
+	url := config.GetAPIURL()
+	key := config.GetAPIKEY()
 	// Creo cliente http para mandar peticiones (podría usar http.Get() también)
 	client := &http.Client{}
 	if nextPage != "" {
@@ -77,19 +81,19 @@ func fetchPage(nextPage string) ([]Stock, string, error) {
 	for _, it := range r.Items {
 		fFrom, err := parseDollar(it.TargetFrom)
 		if err != nil {
-        return all, "", fmt.Errorf("parse TargetFrom %q: %w", it.TargetFrom, err)
-    }
+			return all, "", fmt.Errorf("parse TargetFrom %q: %w", it.TargetFrom, err)
+		}
 		fTo, err := parseDollar(it.TargetTo)
 		if err != nil {
-        return all, "", fmt.Errorf("parse TargetTo %q: %w", it.TargetTo, err)
-    }
+			return all, "", fmt.Errorf("parse TargetTo %q: %w", it.TargetTo, err)
+		}
 		// Convierto el string time devuelto por la api (RFC3339 con nanosegundos) en un objeto time de go
 		t, err := time.Parse(time.RFC3339Nano, it.Time)
 		if err != nil {
 			return all, "", fmt.Errorf("parse time %q: %w", it.Time, err)
-    }
+		}
 		// Agrego al array de Stock los datos traídos
-		all = append(all, Stock{
+		all = append(all, model.Stock{
 			Ticker:     it.Ticker,
 			Company:    it.Company,
 			TargetFrom: fFrom,
@@ -106,7 +110,7 @@ func fetchPage(nextPage string) ([]Stock, string, error) {
 
 // fetchHistory llama a Yahoo Finance para un ticker,
 // trayendo datos de los últimos 90 días con intervalo diario.
-func fetchHistory(ticker string) ([]HistoricalPoint, error) {
+func fetchHistory(ticker string) ([]model.HistoricalPoint, error) {
 	//API de datos
 	url := fmt.Sprintf(
 		"https://query1.finance.yahoo.com/v8/finance/chart/%s?range=3mo&interval=1d",
@@ -201,10 +205,10 @@ func fetchHistory(ticker string) ([]HistoricalPoint, error) {
 	// Primera serie de datos (porque busco de a 1 ticker)
 	serie := result.Chart.Result[0]
 	// Slice de modelo HistoricalPoint, del tamaño de la serie
-	points := make([]HistoricalPoint, len(serie.Timestamp))
+	points := make([]model.HistoricalPoint, len(serie.Timestamp))
 	// Yahoo devuelve los datos en series paralelas "timestamp" e "indicators", por eso recorro los timestamps
 	for i, ts := range serie.Timestamp {
-		points[i] = HistoricalPoint{
+		points[i] = model.HistoricalPoint{
 			Ticker: ticker,
 			// Transformo el ts en objeto time
 			Date: time.Unix(ts, 0),
@@ -223,10 +227,10 @@ func fetchHistory(ticker string) ([]HistoricalPoint, error) {
 // fetchAllHistories recorre todos los tickers en DB,
 // llama a fetchHistory con throttle de 1 cada 2s,
 // guarda en price_histories, y continúa ante errores.
-func fetchAllHistories(taskID string) error {
+func FetchAllHistories(taskID string) error {
 	//Traigo los stocks
-	var stocks []Stock
-	if err := db.Find(&stocks).Error; err != nil {
+	var stocks []model.Stock
+	if err := db.DB.Find(&stocks).Error; err != nil {
 		log.Fatalf("no pude leer tickers: %v", err)
 		return err
 	}
@@ -242,7 +246,7 @@ func fetchAllHistories(taskID string) error {
 		} else {
 			// Guardo en db
 			for _, pt := range points {
-				if err := db.Clauses(
+				if err := db.DB.Clauses(
 					// Upsert
 					clause.OnConflict{UpdateAll: true},
 				).Create(&pt).Error; err != nil {
@@ -257,9 +261,9 @@ func fetchAllHistories(taskID string) error {
 			log.Printf("Guardados %d puntos para %s\n", len(points), s.Ticker)
 		}
 		// Actualizo el contador de páginas (o tickers) procesados
-		tasksMu.Lock()
-		tasks[taskID].PagesFetched = i + 1
-		tasksMu.Unlock()
+		tasks.TasksMu.Lock()
+		tasks.Tasks[taskID].PagesFetched = i + 1
+		tasks.TasksMu.Unlock()
 		// Espero 1 segundos antes de la siguiente petición
 		time.Sleep(1 * time.Second)
 	}

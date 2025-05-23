@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"github.com/joho/godotenv"
@@ -18,16 +18,16 @@ func init() {
 }
 
 // Obtengo la dsn de la db desde el .env (para GORM)
-func getDBDSN() string {
+func GetDBDSN() string {
 	return os.Getenv("DATABASE_DSN")
 }
 
 // Obtengo URL de la API
-func getAPIURL() string {
+func GetAPIURL() string {
 	return os.Getenv("API_URL")
 }
 
 // Obtengo KEY de la API
-func getAPIKEY() string {
+func GetAPIKEY() string {
 	return os.Getenv("API_KEY")
 }

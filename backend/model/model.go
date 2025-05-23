@@ -1,4 +1,4 @@
-package main
+package model
 
 import "time"
 
@@ -28,7 +28,7 @@ type HistoricalPoint struct {
 
 // Creo el modelo de recomendaciones para las acciones
 type Recommendation struct {
-    Ticker    string    `gorm:"primaryKey"`
-    Score     float64   `gorm:"not null"`
-    UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	Ticker    string    `gorm:"primaryKey"`
+	Score     float64   `gorm:"not null"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }

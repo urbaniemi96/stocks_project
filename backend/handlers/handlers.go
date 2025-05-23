@@ -1,89 +1,71 @@
-package main
+package handlers
 
 import (
 	//"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/urbaniemi96/stocks_project/backend/db"
+	"github.com/urbaniemi96/stocks_project/backend/detail"
+	"github.com/urbaniemi96/stocks_project/backend/fetcher"
+	"github.com/urbaniemi96/stocks_project/backend/model"
+	"github.com/urbaniemi96/stocks_project/backend/recommender"
+	"github.com/urbaniemi96/stocks_project/backend/tasks"
+	"log"
 	"net/http"
 	"strconv"
-	"time"
-	"log"
 )
-
-type HistoryFilters struct {
-    Days      int
-    StartDate *time.Time
-    EndDate   *time.Time
-    MinPrice  *float64
-    MaxPrice  *float64
-    MinVolume *int64
-    OrderDesc bool
-}
-
-type StockDetailResponse struct {
-    Stock              Stock                   `json:"stock"`
-    History            []HistoricalPoint       `json:"history"`
-    RiskReward         RiskRewardData          `json:"riskReward"`
-    RatingDistribution map[string]int          `json:"ratingDistribution"`
-}
-
-type RiskRewardData struct {
-    Labels       []string  `json:"labels"`
-    Volatilities []float64 `json:"volatilities"`
-    Potentials   []float64 `json:"potentials"`
-}
 
 // Inicia una goroutine que trae los stocks de la API y los guarda en la DB (de a una página a la vez)
 func StartFetchHandler(c *gin.Context) {
 	// Genero ID único de tarea
 	id := uuid.New().String()
 	// Inicializo estructura de tarea en progreso
-	info := &TaskInfo{Status: "in-progress", PagesFetched: 0, Error: ""}
+	info := &tasks.TaskInfo{Status: "in-progress", PagesFetched: 0, Error: ""}
 
 	// Hago lock del mutex del mapa de tareas
-	tasksMu.Lock()
+	tasks.TasksMu.Lock()
 	// Escribo la tarea en el mapa de tareas (se pasa por referencia)
-	tasks[id] = info
-	tasksMu.Unlock()
+	tasks.Tasks[id] = info
+	tasks.TasksMu.Unlock()
 
 	// Inicio goroutine (se ejecuta en paralelo)
 	go func() {
 		// Marco, al último, el estado de la tarea
 		defer func() {
-			tasksMu.Lock()
+			tasks.TasksMu.Lock()
 			if info.Status != "error" {
 				info.Status = "done"
 			}
-			tasksMu.Unlock()
+			tasks.TasksMu.Unlock()
 		}()
 
 		next := ""
 		for batch := 0; ; batch++ {
 			// Traigo la página actual (ya en formato de [] de Stock en model.go)
-			stocks, nextPage, err := fetchPage(next)
+			stocks, nextPage, err := fetcher.FetchPage(next)
 			if err != nil {
 				// Marco en caso de error
-				tasksMu.Lock()
+				tasks.TasksMu.Lock()
 				info.Status = "error"
 				info.Error = err.Error()
-				tasksMu.Unlock()
+				tasks.TasksMu.Unlock()
 				return
 			}
 			// Guardo los stocks en la BD
-			if err := saveStocks(stocks); err != nil {
+			if err := db.SaveStocks(stocks); err != nil {
 				// Marco en caso de error
-				tasksMu.Lock()
+				tasks.TasksMu.Lock()
 				info.Status = "error"
 				info.Error = err.Error()
-				tasksMu.Unlock()
+				tasks.TasksMu.Unlock()
 				return
 			}
 
 			// Actualizo progreso de la tarea
-			tasksMu.Lock()
+			tasks.TasksMu.Lock()
 			info.PagesFetched = batch + 1
-			tasksMu.Unlock()
+			tasks.TasksMu.Unlock()
 
 			// Termino en caso de que no queden más páginas
 			if nextPage == "" {
@@ -102,9 +84,9 @@ func FetchStatusHandler(c *gin.Context) {
 	// Obtengo id desde URL
 	id := c.Param("id")
 	// Mutex de lectura, leo la info (ok indica si encontró la tarea)
-	tasksMu.RLock()
-	info, ok := tasks[id]
-	tasksMu.RUnlock()
+	tasks.TasksMu.RLock()
+	info, ok := tasks.Tasks[id]
+	tasks.TasksMu.RUnlock()
 
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Tarea no encontrada"})
@@ -115,7 +97,7 @@ func FetchStatusHandler(c *gin.Context) {
 }
 
 // Manejador para listar los stocks guardados en la BD
-func listStocksHandler(c *gin.Context) {
+func ListStocksHandler(c *gin.Context) {
 	// Contador de la petición actual
 	draw := c.DefaultQuery("draw", "1") //Obtengo parámetros y le asigno un default si no existen
 	// Índice del primer registro a mostrar
@@ -139,10 +121,10 @@ func listStocksHandler(c *gin.Context) {
 
 	// Cuento el total de datos en tabla de stocks
 	var total int64
-	db.Table("stocks").Count(&total)
+	db.DB.Table("stocks").Count(&total)
 
 	// Query base
-	query := db.Table("stocks")
+	query := db.DB.Table("stocks")
 
 	// Si hay texto a buscar, filtro resultados (solo busco en "ticker" o en "company")
 	if search != "" {
@@ -153,7 +135,7 @@ func listStocksHandler(c *gin.Context) {
 	var filtered int64
 	query.Count(&filtered)
 
-	var stocks []Stock
+	var stocks []model.Stock
 	query.
 		Order(fmt.Sprintf("%s %s", orderColumnName, orderDir)). // Aplico orden y dirección
 		Offset(start).                                          // Indico de qué registro empezar
@@ -171,54 +153,54 @@ func listStocksHandler(c *gin.Context) {
 
 // Traigo históricos de un ticker específico
 func StockDetailHandler(c *gin.Context) {
-    ticker := c.Param("ticker")
+	ticker := c.Param("ticker")
 
-    // Validación de filtros
-    filters, err := parseHistoryFilters(c)
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	// Validación de filtros
+	filters, err := detail.ParseHistoryFilters(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    // Traigo stock de ese ticker
-    var stock Stock
-    res := db.First(&stock, "ticker = ?", ticker)
-    // Si no encuentro
-    if res.RowsAffected == 0 {
-        c.JSON(http.StatusNotFound, gin.H{"error": "stock not found"})
-        return
-    }
-    // Si hubo otro error
-    if res.Error != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": res.Error.Error()})
-        return
-    }
+	// Traigo stock de ese ticker
+	var stock model.Stock
+	res := db.DB.First(&stock, "ticker = ?", ticker)
+	// Si no encuentro
+	if res.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "stock not found"})
+		return
+	}
+	// Si hubo otro error
+	if res.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": res.Error.Error()})
+		return
+	}
 
-    // Traigo el histórico con los filtros (los únicos funcionales los de fechas)
-    history, err := getHistory(ticker, filters)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	// Traigo el histórico con los filtros (los únicos funcionales los de fechas)
+	history, err := detail.GetHistory(ticker, filters)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-    // Calculo riesgo / recompensa
-    rr := calcRiskReward(history)
+	// Calculo riesgo / recompensa
+	rr := detail.CalcRiskReward(history)
 
-    // Distribución de ratings
-    ratingDist, err := getRatingDistribution()
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	// Distribución de ratings (en desuso)
+	ratingDist, err := detail.GetRatingDistribution()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-    // Estructura de la respuesta
-    resp := StockDetailResponse{
-        Stock:              stock,
-        History:            history,
-        RiskReward:         rr,
-        RatingDistribution: ratingDist,
-    }
-    c.JSON(http.StatusOK, resp)
+	// Estructura de la respuesta
+	resp := detail.StockDetailResponse{
+		Stock:              stock,
+		History:            history,
+		RiskReward:         rr,
+		RatingDistribution: ratingDist,
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 // Inicio goroutine para traer los datos históricos de cada stock desde Yahoo Finance
@@ -226,21 +208,21 @@ func StartEnrichHandler(c *gin.Context) {
 	// Genero un ID único para la tarea
 	taskID := uuid.New().String()
 	// Inicializo estructura de tarea en progreso
-	info := &TaskInfo{Status: "in-progress", PagesFetched: 0, Error: ""}
+	info := &tasks.TaskInfo{Status: "in-progress", PagesFetched: 0, Error: ""}
 
 	// Hago lock del mutex del mapa de tareas
-	tasksMu.Lock()
+	tasks.TasksMu.Lock()
 	// Escribo la tarea en el mapa de tareas (se pasa por referencia)
-	tasks[taskID] = info
-	tasksMu.Unlock()
+	tasks.Tasks[taskID] = info
+	tasks.TasksMu.Unlock()
 
 	// Inicio goroutine
 	go func(taskID string) {
 		// Recorro los stock, e intento traer los datos
-		err := fetchAllHistories(taskID)
-		tasksMu.Lock()
-		defer tasksMu.Unlock()
-		ti := tasks[taskID]
+		err := fetcher.FetchAllHistories(taskID)
+		tasks.TasksMu.Lock()
+		defer tasks.TasksMu.Unlock()
+		ti := tasks.Tasks[taskID]
 		if err != nil {
 			ti.Status = "error"
 			ti.Error = err.Error()
@@ -255,20 +237,20 @@ func StartEnrichHandler(c *gin.Context) {
 // Handler para recalcular las recomendaciones de stocks
 func RecalculateRecommendationsHandler(c *gin.Context) {
 	// Disparo goroutine para recalcular las recomendaciones
-    go func() {
-        if err := RecalculateRecommendations(); err != nil {
-            log.Printf("Error recalculando recomendaciones: %v", err)
-        }
-    }()
-    c.JSON(http.StatusAccepted, gin.H{"status": "started"})
+	go func() {
+		if err := recommender.RecalculateRecommendations(); err != nil {
+			log.Printf("Error recalculando recomendaciones: %v", err)
+		}
+	}()
+	c.JSON(http.StatusAccepted, gin.H{"status": "started"})
 }
 
 // Obtengo el top 20 recomendaciones
 func TopRecommendationsHandler(c *gin.Context) {
-    var recs []Recommendation
-    if err := db.Order("score DESC").Limit(20).Find(&recs).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
-    c.JSON(http.StatusOK, recs)
+	var recs []model.Recommendation
+	if err := db.DB.Order("score DESC").Limit(20).Find(&recs).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, recs)
 }
