@@ -84,7 +84,7 @@ const isAdmin = computed(() => auth.isAdmin)
 const lastUpdated = computed(() => {
   if (recommendations.value.length === 0) return 'N/A'
   const dates = recommendations.value.map(r => new Date(r.UpdatedAt))
-  return dates.reduce((a, b) => (a > b ? a : b)).toLocaleString()
+  return dates.reduce((a, b) => (a > b ? a : b)).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour12: false, })
 })
 
 onMounted(async () => {
