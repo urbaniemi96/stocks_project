@@ -154,7 +154,7 @@
 
     <!-- Candlestick Chart -->
     <Accordion title="Gráfico de velas (OHLC + Volumen)">
-      <div class="w-200 h-120">
+      <div class="w-210 h-120">
         <CandleChart v-if="history.length" :history="history" />
         <div v-else class="flex items-center justify-center h-full text-gray-500">
           No hay datos disponibles
@@ -164,7 +164,7 @@
 
     <!-- Close Price Chart -->
     <Accordion title="Precio a lo largo del tiempo">
-      <div class="w-200 h-100">
+      <div class="w-210 h-100">
         <HistoryChart v-if="labels.length" :labels="labels" :data="closeData" />
         <div v-else class="flex items-center justify-center h-full text-gray-500">No hay datos disponibles</div>
       </div>
@@ -172,7 +172,7 @@
 
     <!-- Volatility Chart -->
     <Accordion title="Volatilidad (%)">
-      <div class="w-200 h-100">
+      <div class="w-210 h-100">
         <HistoryChart
           v-if="riskReward.labels.length"
           :labels="riskReward.labels"
@@ -184,7 +184,7 @@
 
     <!-- Potential Chart -->
     <Accordion title="Potencial (%)">
-      <div class="w-200 h-100">
+      <div class="w-210 h-100">
         <HistoryChart
           v-if="riskReward.labels.length"
           :labels="riskReward.labels"
@@ -196,7 +196,7 @@
 
     <!-- Risk vs Reward -->
     <Accordion title="Riesgo vs Recompensa">
-      <div class="w-200 h-100">
+      <div class="w-210 h-100">
         <ScatterChart
           v-if="riskReward.labels.length"
           :potentials="riskReward.potentials"

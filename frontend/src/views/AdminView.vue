@@ -12,7 +12,7 @@
         </button>
         <button class="tool-button w-136 h-22 flex items-center justify-center space-x-2" @click="enrichAll">
             <font-awesome-icon :icon="['fas', 'chart-line']" class="text-4xl"/>
-            &nbsp;&nbsp;Enriquecer datos (últimos 3 meses)
+            &nbsp;&nbsp;Enriquecer datos (puede demorar horas)
         </button>
         <button class="tool-button w-136 h-22 flex items-center justify-center space-x-2" @click="recalcRecommendations">
             <font-awesome-icon :icon="['fas', 'sync']" class="text-4xl"/>

@@ -28,17 +28,17 @@ func RecalculateRecommendations() error {
 			}
 			var sumR, sumV float64
 			for _, pt := range series {
-					ret := (pt.Close - pt.Open) / pt.Open
-					vol := (pt.High - pt.Low) / pt.Open
+					ret := (pt.Close - pt.Open) / pt.Open // rendimiento diario
+					vol := (pt.High - pt.Low) / pt.Open // volatilidad diaria
 					sumR += ret
 					sumV += vol
 			}
 			N := float64(len(series))
-			avgR := sumR / N
-			avgV := sumV / N
-			sharpe := avgR / (avgV + 1e-6)
+			avgR := sumR / N // rendimiento medio
+			avgV := sumV / N // volatilidad media
+			sharpe := avgR / (avgV + 1e-6) // ratio simplificado de Sharpe
 
-			// peso por rating actual
+			// ponderación por rating actual
 			var s Stock
 			if err := db.Select("rating_to").First(&s, "ticker = ?", ticker).Error; err != nil {
 					continue
