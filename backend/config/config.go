@@ -10,7 +10,7 @@ import (
 // Todas las funciones init() dentro del paquete main se ejecutan ANTES del main(). Ideal para cargar configuraciones
 func init() {
 	// Cargo .env
-	err := godotenv.Load()
+	err := godotenv.Load("../.env")
 	// Detecto error y detenco ejecución
 	if err != nil {
 		log.Fatal("Error al cargar el archivo .env - ERROR: ", err)
