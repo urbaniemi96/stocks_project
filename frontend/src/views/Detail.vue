@@ -2,6 +2,12 @@
   <BackButton />
   <TopButton />
   <HomeButton />
+  <IAOpinion
+    v-if="stock"
+    :stock="stock"
+    :history="history"
+    :riskReward="riskReward"
+  />
 
   <!-- Si no hay stock, muestro mensaje de error -->
   <div
@@ -220,6 +226,7 @@ import BackButton from '../components/BackButton.vue'
 import TopButton from '../components/TopButton.vue'
 import HomeButton from '../components/HomeButton.vue'
 import Accordion from '../components/Accordion.vue'
+import IAOpinion from '../components/IAOpinion.vue'
 
 const route = useRoute()
 const ticker = route.params.ticker as string

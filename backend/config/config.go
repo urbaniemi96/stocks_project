@@ -2,15 +2,24 @@ package config
 
 import (
 	"github.com/joho/godotenv"
+	"runtime"
 	"log"
 	"os"
-	//"fmt"
+	"path/filepath"
 )
 
 // Todas las funciones init() dentro del paquete main se ejecutan ANTES del main(). Ideal para cargar configuraciones
 func init() {
+	// Obtengo la ruta de este archivo (para no depender de dónde se ejecuta el go run)
+    _, thisFile, _, ok := runtime.Caller(0)
+    if !ok {
+        log.Fatal("No se pudo obtener la ruta de config.go")
+    }
+		// Subo a /backend
+    projectBackend := filepath.Join(filepath.Dir(thisFile), "..")
+    envPath := filepath.Join(projectBackend, ".env")
 	// Cargo .env
-	err := godotenv.Load("../.env")
+	err := godotenv.Load(envPath)
 	// Detecto error y detenco ejecución
 	if err != nil {
 		log.Fatal("Error al cargar el archivo .env - ERROR: ", err)

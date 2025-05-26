@@ -33,7 +33,7 @@ export interface HistoricalPoint {
   Open: number 
   Volume: number 
 }
-interface RiskRewardResponse { 
+export interface RiskRewardResponse { 
   labels: string[]
   volatilities: number[]
   potentials: number[] 
