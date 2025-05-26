@@ -2,12 +2,21 @@
   <!-- Floating Button -->
   <button
   v-if="!isOpen"
-    @click="toggleDrawer"
-    class="fixed top-14 right-13 z-50 p-4 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-700 transition"
-    
+  @click="toggleDrawer"
+  class="group fixed top-14 right-13 w-14 h-14 z-50 !bg-purple-600 text-white aspect-square !rounded-full !shadow-lg hover:bg-purple-700 focus:!outline-none focus:!ring-2 focus:!ring-purple-500 !text-xl !transform !transition !duration-200 ease-out hover:-translate-y-1 hover:scale-105 hover:shadow-xl active:translate-y-1 active:scale-95 active:shadow-md"
+>
+  <!-- Tooltip -->
+  <span
+    class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 whitespace-nowrap
+           bg-gray-800 text-white text-sm px-2 py-1 rounded opacity-0
+           pointer-events-none transition-opacity duration-200 group-hover:opacity-100"
   >
-    <font-awesome-icon :icon="['fas', isOpen ? 'times' : 'robot']" />
-  </button>
+    ¿Preguntarle a una IA?
+  </span>
+
+  <!-- Icono -->
+  <font-awesome-icon :icon="['fas', isOpen ? 'times' : 'robot']" />
+</button>
 
   <!-- Slide-out Drawer -->
   <transition name="slide">
@@ -18,7 +27,7 @@
         <!-- Título -->
       <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
         <h3 class="text-lg font-semibold">Análisis de IA</h3>
-        <button @click="toggleDrawer" class="p-1 text-white">
+        <button @click="toggleDrawer" class="p-1 text-white !bg-purple-600">
           <font-awesome-icon :icon="['fas', 'times']" />
         </button>
       </div>
@@ -35,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import type { Stock, HistoricalPoint, RiskRewardResponse } from '../stores/stocks'
@@ -53,9 +62,16 @@ const props = defineProps<{
 const isOpen = ref(false)
 const aiOpinion = ref('')
 
+// Bandera para detectar si ya se trajo una opinión
+const opined = ref(false)
+
 function toggleDrawer() {
   isOpen.value = !isOpen.value
-  if (isOpen.value) {
+  if (isOpen.value && !opined.value) {
+    // Cambio mensaje del textarea
+    aiOpinion.value = "Consultando con una IA experta, este proceso puede demorar minutos..."
+    // Bandera para traer solo una vez la opinión
+    opined.value = true
     askAI()
   }
 }
@@ -75,7 +91,7 @@ async function askAI() {
   }
 
   // Prompt en texto plano
-  const prompt = `Por favor, responde solo en texto plano, sin asteriscos.
+  const prompt = `Responde solo en texto plano, sin asteriscos.
 Analiza esta acción y dime si vale la pena invertir. Datos:
 ${JSON.stringify(payload, null, 2)}`
 
@@ -91,7 +107,7 @@ ${JSON.stringify(payload, null, 2)}`
       body: JSON.stringify({
         model: 'deepseek/deepseek-r1-turbo',
         messages: [
-          { role: 'system', content: 'Eres un asistente financiero experto.' },
+          { role: 'system', content: 'Eres un asistente financiero experto que recomienda si invertir en una acción.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.5,
@@ -104,6 +120,11 @@ ${JSON.stringify(payload, null, 2)}`
   let text = result.choices?.[0]?.message?.content || ''
   // Remover bloques <think>
   text = text.replace(/<think>[\s\S]*?<\/think>/gi, '')
+  // Elimino dobles asteriscos de negrita: **texto** → texto
+  text = text.replace(/\*\*(.*?)\*\*/g, '$1')
+  // Elimino asteriscos simples: *texto* → texto
+  text = text.replace(/\*(.*?)\*/g, '$1')
+
   aiOpinion.value = text.trim()
 }
 </script>
