@@ -50,7 +50,7 @@ func main() {
 	// Rutas del rol admin”
 	admin := r.Group("/admin")
 	admin.Use(middleware.RequireAdmin())
-	admin.POST("/recalculate", handlers.RecalculateRecommendationsHandler) // Recalculo score de recomendación con los datos guardados
+	admin.GET("/recalculate", handlers.RecalculateRecommendationsHandler) // Recalculo score de recomendación con los datos guardados
 	admin.GET("/fetch", handlers.StartFetchHandler)                        // Traigo datos de la API del desafío y guardo en la DB
 	admin.GET("/enrich", handlers.StartEnrichHandler)                      // Inicio enriquecimiento de datos con Yahoo Finance
 	admin.GET("/task/:id", handlers.FetchStatusHandler)                    //Consulto el estado de la tarea con :id

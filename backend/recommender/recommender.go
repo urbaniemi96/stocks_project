@@ -3,12 +3,13 @@ package recommender
 import (
 	"github.com/urbaniemi96/stocks_project/backend/db"
 	"github.com/urbaniemi96/stocks_project/backend/model"
+	"github.com/urbaniemi96/stocks_project/backend/tasks"
 	"gorm.io/gorm/clause"
 	"time"
 )
 
 // Recalculo el score de los stocks
-func RecalculateRecommendations() error {
+func RecalculateRecommendations(taskID string) error {
 	// Traigo el histórico
 	var hist []model.HistoricalPoint
 	if err := db.DB.Find(&hist).Error; err != nil {
@@ -22,7 +23,7 @@ func RecalculateRecommendations() error {
 	}
 
 	// Calculo score de cada ticker
-	recs := make([]model.Recommendation, 0, len(byTicker))
+	//recs := make([]model.Recommendation, 0, len(byTicker))
 	for ticker, series := range byTicker {
 		if len(series) == 0 {
 			// Si no hay datos históricos, continúo
@@ -53,16 +54,21 @@ func RecalculateRecommendations() error {
 
 		score := sharpe * weight
 
-		recs = append(recs, model.Recommendation{
+		rec := model.Recommendation{
 			Ticker:    ticker,
 			Score:     score,
 			UpdatedAt: time.Now(),
-		})
+		}
+		db.DB.Clauses(clause.OnConflict{UpdateAll: true}).Create(&rec)
+		// Actualizo el contador de tickers procesados
+		tasks.TasksMu.Lock()
+		tasks.Tasks[taskID].PagesFetched += 1
+		tasks.TasksMu.Unlock()
 	}
 
 	// Upsert masivo
-	for _, r := range recs {
+	/*for _, r := range recs {
 		db.DB.Clauses(clause.OnConflict{UpdateAll: true}).Create(&r)
-	}
+	}*/
 	return nil
 }

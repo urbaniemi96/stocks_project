@@ -11,7 +11,6 @@ import (
 	"github.com/urbaniemi96/stocks_project/backend/model"
 	"github.com/urbaniemi96/stocks_project/backend/recommender"
 	"github.com/urbaniemi96/stocks_project/backend/tasks"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -246,13 +245,31 @@ func StartEnrichHandler(c *gin.Context) {
 
 // Handler para recalcular las recomendaciones de stocks
 func RecalculateRecommendationsHandler(c *gin.Context) {
+	// Genero un ID único para la tarea
+	taskID := uuid.New().String()
+	// Inicializo estructura de tarea en progreso
+	info := &tasks.TaskInfo{Status: "in-progress", PagesFetched: 0, Error: ""}
+
+	// Hago lock del mutex del mapa de tareas
+	tasks.TasksMu.Lock()
+	// Escribo la tarea en el mapa de tareas (se pasa por referencia)
+	tasks.Tasks[taskID] = info
+	tasks.TasksMu.Unlock()
 	// Disparo goroutine para recalcular las recomendaciones
-	go func() {
-		if err := recommender.RecalculateRecommendations(); err != nil {
-			log.Printf("Error recalculando recomendaciones: %v", err)
+	go func(taskID string) {
+		err := recommender.RecalculateRecommendations(taskID)
+
+		tasks.TasksMu.Lock()
+		defer tasks.TasksMu.Unlock()
+		ti := tasks.Tasks[taskID]
+		if err != nil {
+			ti.Status = "error"
+			ti.Error = err.Error()
+		} else {
+			ti.Status = "done"
 		}
-	}()
-	c.JSON(http.StatusAccepted, gin.H{"status": "started"})
+	}(taskID)
+	c.JSON(202, gin.H{"task_id": taskID})
 }
 
 // Obtengo el top 20 recomendaciones

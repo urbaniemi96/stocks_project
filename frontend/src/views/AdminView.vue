@@ -31,7 +31,7 @@
             ></div>
           </div>
           <p class="text-sm text-gray-600 mb-2">
-            Páginas obtenidas: <span class="font-medium">{{ status.pages_fetched }}</span>
+            Páginas procesadas: <span class="font-medium">{{ status.pages_fetched }}</span>
           </p>
 
           <!-- Estado con badges -->

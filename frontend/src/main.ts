@@ -15,6 +15,15 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { fas } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
+// Vue Toastification
+import Toast from "vue-toastification";
+import type { PluginOptions } from 'vue-toastification'
+import "vue-toastification/dist/index.css";
+
+import { useAuthStore } from './stores/auth'
+
+
+
 library.add(fas)
 
 // Sobrescribimos las clases que DataTables aplica por defecto
@@ -28,7 +37,28 @@ $.extend($.fn.dataTable.ext.classes, {
 })
 
 const app = createApp(App)
+
+// Opciones de vue toastification
+const options: PluginOptions = {
+  timeout: 3000,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+};
+app.use(Toast, options);
+
 app.component('font-awesome-icon', FontAwesomeIcon)
 app.use(createPinia())
+
+// Traigo las credenciales del usuario
+const auth = useAuthStore()
+try {
+  await auth.fetchUser()
+} catch {
+  // Usuario de demostración por defecto
+  auth.setUser({ id: "demo-user", role: 'user' })
+}
+
+
 app.use(router)  
 app.mount('#app')

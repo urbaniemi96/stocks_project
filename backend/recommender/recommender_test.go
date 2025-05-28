@@ -14,6 +14,9 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/urbaniemi96/stocks_project/backend/db"
+
+	"github.com/urbaniemi96/stocks_project/backend/tasks"
+
 )
 // (Comentario de la IA al preguntar por require.InEpsilon. Me pareció informativo dejarlo)
 // floatMatcher implementa sqlmock.Argument para comparar floats con tolerancia
@@ -39,10 +42,17 @@ func (f floatMatcher) Match(v driver.Value) bool {
 }
 // Testeo RecalculateRecommendations usando sqlmock
 func TestRecalculateRecommendations_SQLMock(t *testing.T) {
+	// Configuración inicial
+	fakeTaskID := "test-task-123"
+	tasks.TasksMu.Lock()
+	tasks.Tasks[fakeTaskID] = &tasks.TaskInfo{Status: "in-progress", PagesFetched: 0, Error: ""}
+	tasks.TasksMu.Unlock()
+
 	// Inicializo sqlmock y GORM
 	sqlDB, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer sqlDB.Close()
+
 	// Abro GORM sobre CockroachDB (Postgres) con la conexión mockeada
 	dialector := postgres.New(postgres.Config{
 		Conn: sqlDB, 
@@ -50,6 +60,7 @@ func TestRecalculateRecommendations_SQLMock(t *testing.T) {
 	})
 	gormDB, err := gorm.Open(dialector, &gorm.Config{})
 	require.NoError(t, err)
+
 	// Reasigno variable global para que use el mock
 	db.DB = gormDB
 
@@ -78,7 +89,13 @@ func TestRecalculateRecommendations_SQLMock(t *testing.T) {
 	mock.ExpectCommit()
 
 	// Ejecuto función a testear
-	err = RecalculateRecommendations()
+	err = RecalculateRecommendations(fakeTaskID)
+	// Verifico que se hayan incrementado las páginas procesadas
+	tasks.TasksMu.Lock()
+	if tasks.Tasks[fakeTaskID].PagesFetched != 1 {
+			t.Errorf("expected PagesFetched to be 1, got %d", tasks.Tasks[fakeTaskID].PagesFetched)
+	}
+	tasks.TasksMu.Unlock()
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }

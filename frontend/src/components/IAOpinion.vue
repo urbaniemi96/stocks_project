@@ -48,6 +48,7 @@ import { ref } from 'vue'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import type { Stock, HistoricalPoint, RiskRewardResponse } from '../stores/stocks'
+import { useToast } from "vue-toastification";
 
 dayjs.extend(isSameOrAfter)
 
@@ -57,6 +58,9 @@ const props = defineProps<{
   history: HistoricalPoint[]
   riskReward: RiskRewardResponse
 }>()
+
+// Toast
+const toast = useToast();
 
 // Estado del drawer
 const isOpen = ref(false)
@@ -126,6 +130,13 @@ ${JSON.stringify(payload, null, 2)}`
   text = text.replace(/\*(.*?)\*/g, '$1')
 
   aiOpinion.value = text.trim()
+
+  // Muestro mensaje de "listo" si no está abierto el slide
+  if (!isOpen.value) {
+    toast.success("La opinión de la IA está lista!", {
+      timeout: 2000
+    });
+  }
 }
 </script>
 

@@ -121,8 +121,17 @@ export const useStockStore = defineStore('stocks', {
 
     // Disparo recalculo de recomendaciones
     async triggerRecalculate() {
-      await api.post('/admin/recalculate')
-      //MOSTRAR MENSAJE 
+      const res = await api.get('/admin/recalculate')
+      this.taskId = res.data.task_id
+
+      // Empiezo a pollear cada 3seg hasta que status == "done" o "error"
+      const interval = setInterval(async () => {
+        const st = await api.get(`/admin/task/${this.taskId}`)
+        this.status = st.data
+        if (this.status.status !== 'in-progress') {
+          clearInterval(interval)
+        }
+      }, 3000)
     },
 
     // Traigo las top-20 recomendaciones 
