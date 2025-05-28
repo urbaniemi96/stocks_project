@@ -15,6 +15,16 @@ import (
 	"net/http"
 	"strconv"
 )
+// Leo el usuario desde el contexto 
+func ReadUserHandler(c *gin.Context) {
+  userID, _   := c.Get("userID")
+  userRole, _ := c.Get("userRole")
+
+  c.JSON(200, gin.H{
+    "id":   userID,
+    "role": userRole,
+  })
+}
 
 // Inicia una goroutine que trae los stocks de la API y los guarda en la DB (de a una página a la vez)
 func StartFetchHandler(c *gin.Context) {

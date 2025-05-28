@@ -9,6 +9,7 @@ func FakeAdmin() gin.HandlerFunc {
 		// Simulo un userID y rol admin
 		c.Set("userID", "demo-user")
 		c.Set("userRole", "admin")
+		//c.Set("userRole", "user")
 		c.Next()
 	}
 }

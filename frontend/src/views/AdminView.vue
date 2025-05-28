@@ -2,6 +2,7 @@
   <BackButton />
   <TopButton />
   <HomeButton />
+
   <div class="p-8">
     <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-10">Configuración</h1>
     
@@ -83,9 +84,9 @@
 <script lang="ts" setup>
 import { useStockStore } from '../stores/stocks'
 import { storeToRefs } from 'pinia'
-import BackButton from '../components/BackButton.vue'
-import TopButton from '../components/TopButton.vue'
-import HomeButton from '../components/HomeButton.vue'
+import BackButton from '../components/navigation/BackButton.vue'
+import TopButton from '../components/navigation/TopButton.vue'
+import HomeButton from '../components/navigation/HomeButton.vue'
 
 const store = useStockStore()
 const { taskId, status } = storeToRefs(store)

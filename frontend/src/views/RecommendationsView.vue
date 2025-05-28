@@ -2,6 +2,7 @@
   <BackButton />
   <TopButton />
   <HomeButton />
+  <PayButton />
   <div class="container mx-auto p-4 space-y-6">
     <div class="flex justify-between items-center mb-4">
     <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-4">Top 20 Recomendaciones</h1>
@@ -67,9 +68,10 @@ import { useStockStore } from '../stores/stocks'
 import { useAuthStore } from '../stores/auth'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import BackButton from '../components/BackButton.vue'
-import TopButton from '../components/TopButton.vue'
-import HomeButton from '../components/HomeButton.vue'
+import BackButton from '../components/navigation/BackButton.vue'
+import TopButton from '../components/navigation/TopButton.vue'
+import HomeButton from '../components/navigation/HomeButton.vue'
+import PayButton from '../components/navigation/PayButton.vue'
 
 
 const router = useRouter()

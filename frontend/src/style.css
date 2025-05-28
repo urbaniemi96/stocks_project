@@ -24,21 +24,19 @@ input[type="date"]::-moz-calendar-picker-indicator {
 
   color-scheme: light dark;
   color: var(--color-text-light);
-  background-color: var(--color-bg-light);
+
+  background-image: linear-gradient(
+    to bottom,
+    #EFF6FF,
+    #FFFFFF
+  );
   /*font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;*/
 }
 
-a {
-  font-weight: 500;
-  color: theme('colors.indigo.600');
-  text-decoration: inherit;
-}
-a:hover {
-  color: theme('colors.indigo.700');
-}
+
 
 body {
   margin: 0 auto;
@@ -61,7 +59,6 @@ button {
   background-color: theme('colors.indigo.600');
 
   cursor: pointer;
-  transition: border-color 0.25s;
 }
 button:hover {
   background-color: theme('colors.indigo.700');

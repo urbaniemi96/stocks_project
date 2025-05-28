@@ -1,16 +1,24 @@
-
-
 <template>
   <div class="p-8">
-    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-10">Menú</h1>
+    <header class="mb-12 text-center">
+      <!-- Título con degradado en el texto -->
+      <h1 class="text-5xl font-extrabold bg-clip-text text-transparent
+                 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500">
+        ¡Bienvenido a Stockeando!
+      </h1>
+      <!-- Subtítulo descriptivo -->
+      <p class="mt-3 text-lg text-gray-600 dark:text-gray-300">
+        Gestiona tus inversiones con un solo clic
+      </p>
+    </header>
 
     <div class="flex flex-col items-center space-y-6">
       <div class="flex space-x-4 justify-center">
-        <button style="background-color: #DB162F;" class="tool-button w-66 h-54 flex flex-col items-center justify-center" @click="goDash">
+        <button class="!bg-[#DB162F] tool-button w-66 h-54 flex flex-col items-center justify-center" @click="goDash">
           <font-awesome-icon :icon="['fas', 'money-bills']" class="text-4xl mb-2"/>
           Dashboard
         </button>
-        <button style="background-color: #59544B;" class="tool-button w-66 h-54 flex flex-col items-center justify-center" @click="goRecommend">
+        <button class="!bg-[#59544B] tool-button w-66 h-54 flex flex-col items-center justify-center" @click="goRecommend">
           <font-awesome-icon :icon="['fas', 'money-bill-trend-up']" class="text-4xl mb-2"/>
           Recomendaciones
         </button>
@@ -20,6 +28,12 @@
         <button class="tool-button w-136 h-22 flex items-center justify-center space-x-2" @click="goConfig">
           <font-awesome-icon :icon="['fas', 'gear']" class="text-4xl"/>
           &nbsp;&nbsp;Panel Administración
+        </button>
+      </div>
+      <div v-if="auth.isUser" class="flex justify-center">
+        <button class="!bg-[#28A745] tool-button w-136 h-22 flex items-center justify-center space-x-2" @click="goPay">
+          <font-awesome-icon :icon="['fas', 'sack-dollar']" />
+          &nbsp;&nbsp;Activar Suscripción
         </button>
       </div>
     </div>
@@ -44,6 +58,10 @@ function goRecommend() {
 
 function goConfig() {
   router.push('/configuration')
+}
+function goPay() {
+  router.push('/suscription')
+  
 }
 </script>
 

@@ -6,10 +6,14 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Todas las funciones init() dentro del paquete main se ejecutan ANTES del main(). Ideal para cargar configuraciones
 func init() {
+	if runningTests() {
+        return // saltamos la carga del .env
+    }
 	// Obtengo la ruta de este archivo (para no depender de dónde se ejecuta el go run)
     _, thisFile, _, ok := runtime.Caller(0)
     if !ok {
@@ -24,6 +28,15 @@ func init() {
 	if err != nil {
 		log.Fatal("Error al cargar el archivo .env - ERROR: ", err)
 	}
+}
+
+func runningTests() bool {
+    for _, arg := range os.Args {
+        if strings.HasPrefix(arg, "-test.") {
+            return true
+        }
+    }
+    return false
 }
 
 // Obtengo la dsn de la db desde el .env (para GORM)

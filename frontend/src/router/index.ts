@@ -6,6 +6,8 @@ import AdminView from '../views/AdminView.vue'
 import StockView from '../views/StockDashboard.vue'
 import StockDetailView from '../views/Detail.vue'
 import RecommendationsView from '../views/RecommendationsView.vue'
+import ThankYouView from '../views/ThankYouView.vue'
+import PayView from '../views/PayView.vue'
 import { useAuthStore } from '../stores/auth'
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 
@@ -32,7 +34,18 @@ const routes: RouteRecordRaw[] = [
   { 
     path: '/recommendations', 
     name: 'Recommendations', 
-    component: RecommendationsView },
+    component: RecommendationsView 
+  },
+  {
+    path: '/suscription',
+    name: 'suscription',
+    component: PayView,
+  },
+  {
+    path: '/thanks',
+    name: 'thanks',
+    component: ThankYouView,
+  },
 ]
 
 // Para reiniciar el scroll al cambiar de página

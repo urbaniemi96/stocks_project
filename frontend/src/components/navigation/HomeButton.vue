@@ -6,7 +6,7 @@
       hover:-translate-y-1 hover:scale-105 hover:shadow-xl
       active:translate-y-1 active:scale-95 active:shadow-md
       focus:!outline-none focus:!ring-2 focus:!ring-blue-400"
-    aria-label="Volver atrás"
+    aria-label="Ir al menú"
   >
     <font-awesome-icon :icon="['fas', 'house']" />
   </button>

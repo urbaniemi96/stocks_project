@@ -2,6 +2,7 @@
   <BackButton />
   <TopButton />
   <HomeButton />
+  <PayButton />
   <IAOpinion
     v-if="stock"
     :stock="stock"
@@ -218,15 +219,16 @@
 import { reactive, computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStockStore } from '../stores/stocks'
-import CandleChart from '../components/CandleChart.vue'
-import HistoryChart from '../components/HistoryChart.vue'
-import ScatterChart from '../components/ScatterChart.vue'
+import CandleChart from '../components/charts/CandleChart.vue'
+import HistoryChart from '../components/charts/HistoryChart.vue'
+import ScatterChart from '../components/charts/ScatterChart.vue'
 import type { HistoricalPoint, HistoryFilters } from '../stores/stocks'
-import BackButton from '../components/BackButton.vue'
-import TopButton from '../components/TopButton.vue'
-import HomeButton from '../components/HomeButton.vue'
+import BackButton from '../components/navigation/BackButton.vue'
+import TopButton from '../components/navigation/TopButton.vue'
+import HomeButton from '../components/navigation/HomeButton.vue'
 import Accordion from '../components/Accordion.vue'
 import IAOpinion from '../components/IAOpinion.vue'
+import PayButton from '../components/navigation/PayButton.vue'
 
 const route = useRoute()
 const ticker = route.params.ticker as string

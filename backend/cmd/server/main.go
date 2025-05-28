@@ -35,6 +35,9 @@ func main() {
 
 	// Rutas hacia los manejadores
 
+	// Leo el usuario desde el contexto
+	r.GET("/read/user", handlers.ReadUserHandler)
+
 	// Muestro los stocks guardados en la DB
 	r.GET("/stocks", handlers.ListStocksHandler)
 

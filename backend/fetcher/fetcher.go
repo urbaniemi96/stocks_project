@@ -241,7 +241,6 @@ func FetchAllHistories(taskID string) error {
 		points, err := fetchHistory(s.Ticker)
 		if err != nil {
 			log.Printf("ERROR al obtener datos para %s: %v", s.Ticker, err)
-			time.Sleep(2 * time.Second)
 			continue
 		} else {
 			// Guardo en db

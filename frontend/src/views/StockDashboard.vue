@@ -2,6 +2,7 @@
   <BackButton />
   <TopButton />
   <HomeButton />
+  <PayButton />
   <div class="container mx-auto p-4 space-y-6">
     <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100">Stock Dashboard</h1>
     <table ref="stocksTable" class="min-w-full bg-white dark:bg-gray-800 dark:text-gray-200 text-sm divide-y">
@@ -23,9 +24,10 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 import $ from 'jquery'
 import 'datatables.net'
 import { useRouter } from 'vue-router'
-import BackButton from '../components/BackButton.vue'
-import TopButton from '../components/TopButton.vue'
-import HomeButton from '../components/HomeButton.vue'
+import BackButton from '../components/navigation/BackButton.vue'
+import TopButton from '../components/navigation/TopButton.vue'
+import HomeButton from '../components/navigation/HomeButton.vue'
+import PayButton from '../components/navigation/PayButton.vue'
 
 const router = useRouter()
 
