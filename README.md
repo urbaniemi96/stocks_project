@@ -1,3 +1,6 @@
+# 📈 Desafío de Selección - Stockeando
+Esta aplicación web fue desarrollada como parte de un desafío para un proceso de selección laboral. El objetivo es ofrecer una herramienta interactiva que permita visualizar, analizar y recomendar acciones financieras, con funcionalidades de filtrado, visualización de datos, enriquecimiento de información y asistencia mediante IA.
+
 ## 📚 Secciones de la Aplicación
 
 La aplicación cuenta con cinco secciones principales:
