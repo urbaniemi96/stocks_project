@@ -6,8 +6,26 @@
   <div class="container mx-auto p-4 space-y-6">
     <div class="flex justify-between items-center mb-4">
     <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-4">Top 20 Recomendaciones</h1>
-    <div v-if="isAdmin" class="flex items-center space-x-4">
-        <span class="text-sm text-gray-600 dark:text-gray-400">Última actualización: {{ lastUpdated }}</span>
+    <div class="flex flex-col items-center space-x-4">
+        <span class="text-sm text-gray-600 dark:text-gray-400 group relative ">Última actualización: {{ lastUpdated }}</span>
+        <!-- Contenedor clickable con group y relative -->
+        <span v-if="isUser"
+          class="relative group inline-block text-sm text-green-600 dark:text-green-400 font-bold
+                 underline decoration-green-600 hover:decoration-green-800 cursor-pointer transition-colors"
+          @click="goPay"
+        >
+          ¿Quieres tener las recomendaciones de hoy?
+
+          <!-- Tooltip -->
+          <span
+            class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 whitespace-nowrap
+                   bg-gray-800 text-white text-sm px-2 py-1 rounded opacity-0
+                   pointer-events-none transition-opacity duration-200
+                   group-hover:opacity-100"
+          >
+            Prueba nuestra suscripción!!
+          </span>
+        </span>
       </div>
     </div>
     <p class="mb-4 text-gray-700">
@@ -80,7 +98,8 @@ const auth = useAuthStore()
 const store = useStockStore()
 const { recommendations } = storeToRefs(store)
 
-const isAdmin = computed(() => auth.isAdmin)
+//const isAdmin = computed(() => auth.isAdmin)
+const isUser = computed(() => auth.isUser)
 
 // Deriva la última fecha de updated_at del primer elemento
 const lastUpdated = computed(() => {
@@ -93,6 +112,12 @@ onMounted(async () => {
   // Carga las recomendaciones
   await store.loadTopRecommendations()
 })
+
+function goPay() {
+  // Muestro vista de suscripción
+  router.push('/suscription')
+  
+}
 </script>
 
 <style scoped>

@@ -72,13 +72,35 @@
         <h1 class="text-4xl font-extrabold text-gray-900 dark:text-gray-100">{{ stock?.ticker }}</h1>
         <p class="mt-2 text-lg font-bold text-gray-600 dark:text-gray-300">{{ stock?.company }}</p>
       </div>
-      <div class="flex gap-4">
-        <div class="bg-indigo-600 text-white dark:text-gray-300 px-4 py-2 rounded-md font-semibold">
-          {{ stock?.action }}
+      <div class="flex flex-col">
+        <div class="flex gap-4">
+          <div class="bg-indigo-600 text-white dark:text-gray-300 px-4 py-2 rounded-md font-semibold">
+            {{ stock?.action }}
+          </div>
+          <div class="text-gray-700 dark:text-gray-300 self-center">
+            Broker: {{ stock?.brokerage }}
+          </div>
         </div>
-        <div class="text-gray-700 dark:text-gray-300 self-center">
-          Broker: {{ stock?.brokerage }}
-        </div>
+        <!-- Cartel de suscripción -->
+         <div v-if="isUser">
+
+           <span 
+             class="relative group inline-block text-sm text-green-600 dark:text-green-400 font-bold
+                   underline decoration-green-600 hover:decoration-green-800 cursor-pointer transition-colors mt-3"
+             @click="goPay"
+           >
+             ¿Quieres datos en tiempo real?
+             <!-- Tooltip -->
+             <span
+               class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2  whitespace-nowrap
+                      bg-gray-800 text-white text-sm px-2 py-1 rounded opacity-0
+                      pointer-events-none transition-opacity duration-200
+                      group-hover:opacity-100"
+             >
+               Prueba nuestra suscripción!!
+             </span>
+           </span>
+         </div>
       </div>
     </header>
     <!-- Filtros -->
@@ -217,7 +239,7 @@
 
 <script setup lang="ts">
 import { reactive, computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useStockStore } from '../stores/stocks'
 import CandleChart from '../components/charts/CandleChart.vue'
 import HistoryChart from '../components/charts/HistoryChart.vue'
@@ -229,9 +251,17 @@ import HomeButton from '../components/navigation/HomeButton.vue'
 import Accordion from '../components/Accordion.vue'
 import IAOpinion from '../components/IAOpinion.vue'
 import PayButton from '../components/navigation/PayButton.vue'
+import { useAuthStore } from '../stores/auth'
+
 
 const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
+
 const ticker = route.params.ticker as string
+
+//const isAdmin = computed(() => auth.isAdmin)
+const isUser = computed(() => auth.isUser)
 
 const stocksStore = useStockStore()
 const detail = computed(() => stocksStore.detail)
@@ -302,6 +332,13 @@ async function applyFilters() {
 onMounted(async () => {
   applyFilters()
 })
+
+
+function goPay() {
+  // Muestro vista de suscripción
+  router.push('/suscription')
+  
+}
 </script>
 
 <style scoped>
