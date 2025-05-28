@@ -10,6 +10,8 @@ import ThankYouView from '../views/ThankYouView.vue'
 import PayView from '../views/PayView.vue'
 import { useAuthStore } from '../stores/auth'
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
+import TetrisGrid from '../components/TetrisGrid.vue'
+
 
 const routes: RouteRecordRaw[] = [
   { path: '/', 
@@ -45,6 +47,11 @@ const routes: RouteRecordRaw[] = [
     path: '/thanks',
     name: 'thanks',
     component: ThankYouView,
+  },
+  {
+    path: '/tetris',
+    name: 'tetris',
+    component: TetrisGrid,
   },
 ]
 
