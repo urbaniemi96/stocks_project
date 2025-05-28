@@ -252,7 +252,9 @@ import Accordion from '../components/Accordion.vue'
 import IAOpinion from '../components/IAOpinion.vue'
 import PayButton from '../components/navigation/PayButton.vue'
 import { useAuthStore } from '../stores/auth'
+import { useToast } from "vue-toastification";
 
+const toast = useToast();
 
 const route = useRoute()
 const router = useRouter()
@@ -320,6 +322,19 @@ const trend = computed(() => {
 
 // Función que recarga el detalle aplicando los filtros
 async function applyFilters() {
+  // Comparo el valor de los filtros de fechas
+  if (filters.start_date && filters.end_date) {
+    // Obtengo objetos Date
+    const start = new Date(filters.start_date)
+    const end = new Date(filters.end_date)
+    // Comparo y muetro mensaje en caso de error
+    if (start > end) {
+      toast.error("\"Fecha inicio\" no puede ser mayor a \"Fecha de fin\"", {
+        timeout: 4000
+      });
+      return
+    }
+  }
   try {
     await stocksStore.loadDetail(ticker, { ...filters })
   } catch (err) {

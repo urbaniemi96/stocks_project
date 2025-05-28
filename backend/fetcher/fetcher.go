@@ -43,6 +43,8 @@ func FetchPage(nextPage string) ([]model.Stock, string, error) {
 	var r apiResponse
 	// Inicio array de estructuras tipo Stock (definidas en model.go)
 	var all []model.Stock
+	// Cargo el archivo .env si no está cargado ya
+	config.InitEnv()
 	url := config.GetAPIURL()
 	key := config.GetAPIKEY()
 	// Creo cliente http para mandar peticiones (podría usar http.Get() también)

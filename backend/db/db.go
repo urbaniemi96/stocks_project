@@ -15,6 +15,8 @@ var DB *gorm.DB
 // Inicio la conexión a la DB, creo las tablas si no existen
 func InitDB() {
 	var err error
+	// Cargo el archivo .env si no está cargado ya
+	config.InitEnv()
 	dsn := config.GetDBDSN()
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {

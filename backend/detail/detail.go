@@ -53,6 +53,10 @@ func ParseHistoryFilters(c *gin.Context) (HistoryFilters, error) {
 		}
 		hf.EndDate = &t
 	}
+	// Si ambas fechas están presentes, y start > end, las intercambio
+	if hf.StartDate != nil && hf.EndDate != nil && hf.StartDate.After(*hf.EndDate) {
+		hf.StartDate, hf.EndDate = hf.EndDate, hf.StartDate
+	}
 	// En desuso por haber quitado los filtros
 	if mp := c.Query("min_price"); mp != "" {
 		v, err := strconv.ParseFloat(mp, 64)
