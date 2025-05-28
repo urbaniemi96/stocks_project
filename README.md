@@ -28,8 +28,8 @@ Sección administrativa para la gestión de datos.
 - Recalculo del score de las acciones recomendadas.
 
 ### 5️⃣ Suscripción Premium
-Sección para obtener acceso a beneficios exclusivos.  
-- Ofrece distintos niveles de suscripción.  
+Sección para obtener acceso a una suscripción mensual.  
+- Ofrece distintos beneficios.  
 - Incluye un botón de pago (actualmente muestra un mensaje de agradecimiento).
 
 ---
